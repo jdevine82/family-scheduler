@@ -5,5 +5,5 @@ from app.config import APP_DIR
 templates = Jinja2Templates(directory=str(APP_DIR / "templates"))
 
 # Bump when static files change so browsers (and the wall kiosk) fetch fresh copies.
-ASSET_VERSION = "13"
+ASSET_VERSION = "15"
 templates.env.globals["v"] = ASSET_VERSION

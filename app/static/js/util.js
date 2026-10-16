@@ -84,3 +84,92 @@ export function choose(title, choices, text = "") {
 }
 
 export const isPhone = () => window.matchMedia("(max-width: 899px)").matches;
+
+// ---------- Australian date boxes ----------
+// Native <input type="date"> shows the *browser's* format (mm/dd/yyyy on US-English
+// browsers, whatever the page says). Every date input is wrapped automatically: a text
+// box that shows and accepts dd/mm/yyyy, plus a 📅 button that opens the native picker.
+// The original input stays in the form (hidden) and keeps its name, id and ISO value,
+// so code reading `input.value` is unchanged.
+const nativeValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value");
+const toAU = (iso) => (iso && /^\d{4}-\d{2}-\d{2}$/.test(iso) ? `${iso.slice(8)}/${iso.slice(5, 7)}/${iso.slice(0, 4)}` : "");
+
+export function parseAUDate(text) {
+  const t = text.trim();
+  if (!t) return "";
+  let d, m, y;
+  const digits = t.replace(/\D/g, "");
+  const parts = t.split(/[^\d]+/).filter(Boolean);
+  if (parts.length === 3 && parts[0].length === 4) [y, m, d] = parts; // 2026-10-16
+  else if (parts.length >= 2) [d, m, y] = parts;
+  else if (digits.length === 8) [d, m, y] = [digits.slice(0, 2), digits.slice(2, 4), digits.slice(4)];
+  else if (digits.length === 6) [d, m, y] = [digits.slice(0, 2), digits.slice(2, 4), digits.slice(4)];
+  else if (digits.length === 4) [d, m] = [digits.slice(0, 2), digits.slice(2)];
+  else return null;
+  y = y ? (y.length === 2 ? 2000 + +y : +y) : new Date().getFullYear();
+  d = +d; m = +m;
+  const dt = new Date(y, m - 1, d);
+  if (dt.getFullYear() !== y || dt.getMonth() !== m - 1 || dt.getDate() !== d) return null;
+  return isoDate(dt);
+}
+
+export function auDateInput(input) {
+  if (input.dataset.au) return;
+  input.dataset.au = "1";
+  const wrap = document.createElement("span");
+  wrap.className = "audate";
+  const text = document.createElement("input");
+  text.type = "text";
+  text.inputMode = "numeric";
+  text.placeholder = "dd/mm/yyyy";
+  text.autocomplete = "off";
+  text.setAttribute("aria-label", (input.closest("label")?.textContent.trim() || "Date") + " (day/month/year)");
+  if (input.required) text.required = true;
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "icon-btn";
+  btn.textContent = "📅";
+  btn.setAttribute("aria-label", "Pick a date");
+  input.replaceWith(wrap);
+  wrap.append(text, btn, input);
+  input.classList.add("audate-native");
+  input.tabIndex = -1;
+
+  const show = () => { text.value = toAU(nativeValue.get.call(input)); text.classList.remove("bad"); };
+  // Catch value changes made by code (input.value = "2026-10-17") as well as the picker.
+  Object.defineProperty(input, "value", {
+    get() { return nativeValue.get.call(this); },
+    set(v) { nativeValue.set.call(this, v); show(); },
+    configurable: true,
+  });
+  input.addEventListener("change", show);
+  input.addEventListener("input", show);
+  const commit = () => {
+    const iso = parseAUDate(text.value);
+    if (iso === null) { text.classList.add("bad"); toast("Type the date as day/month/year, e.g. 16/10/2026", true); return; }
+    if (iso === nativeValue.get.call(input)) { show(); return; }
+    nativeValue.set.call(input, iso);
+    show();
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+  };
+  text.addEventListener("change", commit);
+  text.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); commit(); } });
+  btn.addEventListener("click", () => {
+    try { input.showPicker(); } catch { input.focus(); input.click(); }
+  });
+  show();
+}
+
+function enhanceDates(root) {
+  if (root.matches?.('input[type="date"]')) auDateInput(root);
+  root.querySelectorAll?.('input[type="date"]:not([data-au])').forEach(auDateInput);
+}
+if (typeof document !== "undefined") {
+  const start = () => {
+    enhanceDates(document.body);
+    new MutationObserver((muts) => muts.forEach((m) => m.addedNodes.forEach((n) => n.nodeType === 1 && enhanceDates(n))))
+      .observe(document.body, { childList: true, subtree: true });
+  };
+  if (document.body) start(); else document.addEventListener("DOMContentLoaded", start);
+}
