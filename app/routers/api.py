@@ -16,14 +16,17 @@ from app.models import (
     KIND_FIXED,
     KIND_FLEXIBLE,
     TASK_DONE,
+    CalendarFeed,
     Event,
+    ExternalEvent,
+    HiddenExternal,
     Member,
     OccurrenceOverride,
     RecurringActivity,
     Task,
     TaskFolder,
 )
-from app.occurrences import build_items, occurrence_dates, occurs_on, recurring_item
+from app.occurrences import build_items, external_item, occurrence_dates, occurs_on, recurring_item
 from app.services import (
     ServiceError,
     active_members,
@@ -430,6 +433,42 @@ def delete_event(event_id: int, db: Session = Depends(get_db)):
     db.commit()
     return {"ok": True}
 
+
+
+# ---------------------------------------------------------------- Google events
+# Google is never changed. Editing a Google event copies it into an ordinary
+# item and hides the original here; deleting just hides it.
+
+def _hide_external(db: Session, xid: int) -> tuple[ExternalEvent, CalendarFeed]:
+    row = (db.query(ExternalEvent, CalendarFeed).join(CalendarFeed, ExternalEvent.feed_id == CalendarFeed.id)
+           .filter(ExternalEvent.id == xid).first())
+    if row is None:
+        bad("That Google calendar has just refreshed. Close this and try again.", 404)
+    x, feed = row
+    if not db.query(HiddenExternal.id).filter_by(feed_id=feed.id, uid=x.uid, start_at=x.start_at).first():
+        db.add(HiddenExternal(feed_id=feed.id, uid=x.uid, start_at=x.start_at))
+    return x, feed
+
+
+@router.patch("/external/{xid}")
+def edit_external(xid: int, body: ItemBody, db: Session = Depends(get_db)):
+    x, feed = _hide_external(db, xid)
+    it = external_item(x, feed, False, now_local())
+    ev = Event(title=it["title"], location=it["location"], notes="", date=parse_date(it["date"]),
+               end_date=parse_date(it["end_date"]), start_time=parse_time(it["start"]), end_time=parse_time(it["end"]),
+               all_day=it["all_day"], is_everyone=False, kind=KIND_FIXED, chime="on" if feed.chime else "default",
+               from_google=feed.label[:100])
+    ev.members = [m for m in [db.get(Member, feed.member_id)] if m]
+    db.add(ev)
+    db.flush()
+    return update_event(ev.id, body, db)
+
+
+@router.delete("/external/{xid}")
+def delete_external(xid: int, db: Session = Depends(get_db)):
+    _hide_external(db, xid)
+    db.commit()
+    return {"ok": True}
 
 def _shift_weekdays(act: RecurringActivity, delta_days: int) -> None:
     if delta_days % 7:

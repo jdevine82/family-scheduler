@@ -15,6 +15,7 @@ from app.models import (
     CalendarFeed,
     Event,
     ExternalEvent,
+    HiddenExternal,
     Member,
     OccurrenceOverride,
     RecurringActivity,
@@ -75,7 +76,7 @@ def _finish(item: dict, now: datetime.datetime) -> dict:
     item["past"] = end <= now
     # Paid jobs are approved on the Money tab instead of in check-in.
     item["needs_checkin"] = (
-        item["kind"] == KIND_FLEXIBLE and item["past"] and not item.get("check_status") and not item["read_only"]
+        item["kind"] == KIND_FLEXIBLE and item["past"] and not item.get("check_status") and item["source"] != "external"
         and not item.get("money_job_id")
     )
     return item
@@ -90,6 +91,7 @@ def event_item(ev: Event, now: datetime.datetime) -> dict:
             "task_id": ev.task_id,
             "money_job_id": ev.money_job_id,
             "money_cents": ev.money_job.amount_cents if ev.money_job else None,
+            "from_google": ev.from_google,
             "title": ev.title,
             "notes": ev.notes,
             "location": ev.location,
@@ -165,6 +167,7 @@ def external_item(x: ExternalEvent, feed: CalendarFeed, chime_google: bool, now:
         {
             "key": f"x{x.id}",
             "source": "external",
+            "external_id": x.id,
             "title": "Busy" if feed.busy_only else x.title,
             "notes": "",
             "location": "" if feed.busy_only else x.location,
@@ -181,7 +184,8 @@ def external_item(x: ExternalEvent, feed: CalendarFeed, chime_google: bool, now:
             "chime": (feed.chime or chime_google) and not x.all_day,
             "chime_setting": "on" if feed.chime else "default",
             "remind_minutes": None,
-            "read_only": True,
+            # Editable: changing it makes a local copy and hides this one (Google itself is never changed).
+            "read_only": False,
             "feed_label": feed.label,
         },
         now,
@@ -244,7 +248,9 @@ def build_items(db: Session, start: datetime.date, end: datetime.date,
         .filter(ExternalEvent.start_at < window_end, ExternalEvent.end_at > window_start)
         .all()
     )
-    items += [external_item(x, feed, chime_google, now) for x, feed in rows]
+    hidden = {(h.feed_id, h.uid, h.start_at) for h in db.query(HiddenExternal).all()}
+    items += [external_item(x, feed, chime_google, now) for x, feed in rows
+              if (x.feed_id, x.uid, x.start_at) not in hidden]
 
     items.sort(key=lambda i: (i["date"], not i["all_day"], i["start"] or "", i["title"].lower()))
     return items

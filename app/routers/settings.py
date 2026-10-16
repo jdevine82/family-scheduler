@@ -184,6 +184,15 @@ def feed_add(member_id: int, label: str = Form(...), ical_url: str = Form(...), 
     return _back("members", f"Added “{feed.label}” and loaded {count} events.")
 
 
+@router.post("/feeds/refresh")
+def feeds_refresh(_: None = Depends(require_parent_page), db: Session = Depends(get_db)):
+    result = feeds.fetch_all(db)
+    failed = db.query(CalendarFeed).filter(CalendarFeed.enabled.is_(True), CalendarFeed.last_error.is_not(None)).count()
+    if failed:
+        return _back("members", err=f"Refreshed {len(result)} calendars; {failed} had a problem (see below).")
+    return _back("members", f"Refreshed {len(result)} calendars.")
+
+
 @router.post("/feeds/{feed_id}")
 def feed_update(feed_id: int, label: str = Form(...), busy_only: str = Form(""), chime: str = Form(""),
                 enabled: str = Form(""), _: None = Depends(require_parent_page), db: Session = Depends(get_db)):
@@ -201,15 +210,6 @@ def feed_delete(feed_id: int, _: None = Depends(require_parent_page), db: Sessio
         db.delete(feed)
         db.commit()
     return _back("members", "Calendar removed.")
-
-
-@router.post("/feeds/refresh")
-def feeds_refresh(_: None = Depends(require_parent_page), db: Session = Depends(get_db)):
-    result = feeds.fetch_all(db)
-    failed = db.query(CalendarFeed).filter(CalendarFeed.enabled.is_(True), CalendarFeed.last_error.is_not(None)).count()
-    if failed:
-        return _back("members", err=f"Refreshed {len(result)} calendars; {failed} had a problem (see below).")
-    return _back("members", f"Refreshed {len(result)} calendars.")
 
 
 # ---------------------------------------------------------------- routines

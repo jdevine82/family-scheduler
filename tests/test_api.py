@@ -190,6 +190,15 @@ def test_settings_need_parent_pin(client, db, family):
     assert r.headers["location"] == "/settings/members"
 
 
+
+def test_refresh_all_calendars_button(client, db, family):
+    from app import money
+    money._failures.clear()
+    client.post("/settings/unlock", data={"pin": "4821", "pin2": "4821", "next": "/settings/members"})
+    # Must not be mistaken for "save calendar number <refresh>".
+    r = client.post("/settings/feeds/refresh", follow_redirects=False)
+    assert r.status_code == 303 and "Refreshed" in r.headers["location"]
+
 def test_routine_start_date_can_be_set_and_moved(admin, family):
     # Created with a later start date (the "Meeting" case): nothing before it.
     rid = admin.post("/api/events", json={"title": "Meeting", "date": "2026-10-31", "start": "13:30", "end": "15:45",

@@ -42,7 +42,7 @@ export async function openReport(member, { today }) {
         it.kind === "flexible" ? "Flexible" : "",
         it.money_cents ? `💰$${(it.money_cents / 100).toFixed(2)}` : "",
         it.everyone ? "Everyone" : "",
-        it.read_only ? "Google" : "",
+        it.source === "external" || it.from_google ? "Google" : "",
       ].filter(Boolean).map((t) => `<span class="tag">${esc(t)}</span>`).join("");
       return `<div class="rrow st-${st}"><span class="ricon" title="${LABEL[st][1]}">${LABEL[st][0]}</span>
         <span class="rtime mono">${when}</span><span class="rtitle">${esc(it.title)}</span><span class="tags">${tags}</span>

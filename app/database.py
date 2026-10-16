@@ -27,6 +27,7 @@ ADDED_COLUMNS: list[tuple[str, str, str]] = [
     ("members", "allowance_weekday", "INTEGER NOT NULL DEFAULT 5"),
     ("members", "allowance_since", "DATE"),
     ("events", "money_job_id", "INTEGER REFERENCES money_jobs(id) ON DELETE SET NULL"),
+    ("events", "from_google", "VARCHAR(100)"),
 ]
 
 

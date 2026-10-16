@@ -97,6 +97,8 @@ class Event(Base):
     remind_minutes: Mapped[int | None] = mapped_column(Integer)
     task_id: Mapped[int | None] = mapped_column(ForeignKey("tasks.id", ondelete="SET NULL"), index=True)
     money_job_id: Mapped[int | None] = mapped_column(ForeignKey("money_jobs.id", ondelete="SET NULL"), index=True)
+    # Label of the Google calendar this was copied from (editing a Google event makes a local copy).
+    from_google: Mapped[str | None] = mapped_column(String(100))
     created_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=_now)
     updated_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=_now, onupdate=_now)
 
@@ -194,6 +196,21 @@ class ExternalEvent(Base):
     all_day: Mapped[bool] = mapped_column(Boolean, default=False)
 
     feed: Mapped[CalendarFeed] = relationship(back_populates="events")
+
+
+class HiddenExternal(Base):
+    """A Google event occurrence that has been edited (copied into an Event) or deleted here.
+
+    Keyed by UID + start, because ExternalEvent rows are rebuilt on every fetch.
+    """
+
+    __tablename__ = "hidden_external"
+    __table_args__ = (UniqueConstraint("feed_id", "uid", "start_at"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    feed_id: Mapped[int] = mapped_column(ForeignKey("calendar_feeds.id", ondelete="CASCADE"), index=True)
+    uid: Mapped[str] = mapped_column(String(255))
+    start_at: Mapped[datetime.datetime] = mapped_column(DateTime)
 
 
 class TaskFolder(Base):

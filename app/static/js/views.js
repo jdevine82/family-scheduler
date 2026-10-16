@@ -15,7 +15,7 @@ export function itemClasses(it) {
   return [
     it.kind === "flexible" ? "is-flex" : "",
     it.everyone ? "is-everyone" : "",
-    it.read_only ? "is-ext" : "",
+    it.source === "external" ? "is-ext" : "",
     it.past && it.kind === "fixed" ? "is-past" : "",
     it.check_status === "rescheduled" ? "is-resched" : "",
   ].join(" ");
@@ -24,7 +24,7 @@ export function itemClasses(it) {
 export function marks(it) {
   let s = "";
   if (it.source === "recurring") s += '<b class="bdg" title="Repeats weekly">↻</b>';
-  if (it.read_only) s += '<b class="bdg" title="From Google calendar">G</b>';
+  if (it.source === "external") s += '<b class="bdg" title="From Google calendar">G</b>';
   if (it.money_cents) s += `<b class="bdg cash" title="Paid job">💰$${(it.money_cents / 100).toFixed(2).replace(/\.00$/, "")}</b>`;
   return s;
 }
@@ -167,7 +167,7 @@ export function renderDay(root, { date, items, members, byId, now, hh, startHour
       : `<span class="et"><span>${esc(it.title)}</span>${marks(it)}${statusHTML(it, true)}</span>${tiny ? "" : `<span class="tm">${fmtTime(it.start)} – ${fmtTime(it.end)}</span>`}${height > 58 ? who : ""}${height > 76 && it.location ? `<span class="sub">📍 ${esc(it.location)}</span>` : ""}`;
     const canEdit = editable && !it.read_only;
     return `<button class="ev ${itemClasses(it)}${tiny ? " tiny" : ""}" data-key="${esc(it.key)}" data-lane="${b.li}" ${canEdit ? "data-move" : ""}
-      style="--c:${itemColor(it, byId)};top:${top}px;height:${height}px;left:calc(${left}% + 2px);width:calc(${width}% - 4px)">${body}${canEdit && it.source !== "external" ? '<span class="rs" data-resize></span>' : ""}</button>`;
+      style="--c:${itemColor(it, byId)};top:${top}px;height:${height}px;left:calc(${left}% + 2px);width:calc(${width}% - 4px)">${body}${canEdit ? '<span class="rs" data-resize></span>' : ""}</button>`;
   }).join("");
 
   const hours = [];
@@ -221,7 +221,7 @@ export function renderWeek(root, { start, items, members, byId, todayStr, editab
   const rows = [{ id: "everyone", name: "Everyone", color: "var(--accent)" }, ...members];
   const chip = (it) => {
     const mk = it.needs_checkin ? '<span class="mk"><i class="dot-amber"></i></span>' : statusHTML(it, true) ? `<span class="mk">${statusHTML(it, true)}</span>` : "";
-    return `<button class="chip ${itemClasses(it)}" data-key="${esc(it.key)}" ${it.read_only || !editable ? "" : "data-move"} style="--c:${itemColor(it, byId)}">${mk}<span class="tm">${isTimed(it) ? fmtTime(it.start) : "All day"}${it.source === "recurring" ? " · ↻" : ""}${it.read_only ? " · G" : ""}</span>${esc(it.title)}</button>`;
+    return `<button class="chip ${itemClasses(it)}" data-key="${esc(it.key)}" ${it.read_only || !editable ? "" : "data-move"} style="--c:${itemColor(it, byId)}">${mk}<span class="tm">${isTimed(it) ? fmtTime(it.start) : "All day"}${it.source === "recurring" ? " · ↻" : ""}${it.source === "external" ? " · G" : ""}</span>${esc(it.title)}</button>`;
   };
   let html = `<div class="week"><div class="wh" style="cursor:default"></div>${dates.map((d) => `<div class="wh${d === todayStr ? " today" : ""}" data-goto-day="${d}">${DAY_SHORT[weekdayIdx(d)]}<small>${parseDate(d).getDate()} ${fmtDate(d).split(" ")[2]}</small></div>`).join("")}`;
   for (const r of rows) {
@@ -275,7 +275,8 @@ export function detailHTML(it, byId, { editable }) {
   const when = isTimed(it) ? `${fmtTime(it.start)} – ${fmtTime(it.end)}` : "All day";
   const days = it.end_date ? `${fmtDate(it.date, { long: true })} – ${fmtDate(it.end_date, { long: true })}` : fmtDate(it.date, { long: true });
   const repeat = it.repeat ? ` · ↻ Repeats ${it.repeat.weekdays.map((d) => DAY_SHORT[d]).join(", ")}${it.repeat.interval_weeks > 1 ? `, every ${it.repeat.interval_weeks} weeks` : ""}` : "";
-  const kind = it.read_only ? `From Google calendar “${esc(it.feed_label)}” (read-only)`
+  const kind = it.source === "external" ? `From Google calendar “${esc(it.feed_label)}”${editable ? " · changes here make a copy in the planner; Google isn't changed" : ""}`
+    : it.from_google ? `Copied from Google calendar “${esc(it.from_google)}” · changes here don't go back to Google`
     : it.money_cents ? `💰 Paid job · $${(it.money_cents / 100).toFixed(2)} once a parent approves it on the Money tab`
     : it.kind === "flexible" ? `Flexible job${it.task_id ? " · from the task list" : ""}` : "Fixed event";
   const remind = it.remind_minutes ? ` · 🔔 reminder ${it.remind_minutes} min before` : "";

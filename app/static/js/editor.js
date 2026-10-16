@@ -181,6 +181,9 @@ export function openEditor({ item = null, defaults = {}, members, onSaved, serie
       } else if (item.source === "event") {
         await patch(`/api/events/${item.event_id}`, body);
         toast("Saved");
+      } else if (item.source === "external") {
+        await patch(`/api/external/${item.external_id}`, body);
+        toast("Saved in the planner (Google isn't changed)");
       } else {
         const r = item.repeat;
         const startChanged = body.repeat.valid_from && body.repeat.valid_from !== r.valid_from;
@@ -214,6 +217,11 @@ export async function deleteItem(item) {
       const scope = await scopeQuestion(item, { verb: "Delete" });
       if (!scope) return false;
       await del(`/api/recurring/${item.recurring_id}?scope=${scope}&original_date=${item.original_date}`);
+    } else if (item.source === "external") {
+      const ok = await choose(`Remove “${item.title}” from the planner?`, [{ label: "Remove", value: true, danger: true }, { label: "Keep it", value: false }],
+        "It stays in Google calendar.");
+      if (!ok) return false;
+      await del(`/api/external/${item.external_id}`);
     } else {
       const ok = await choose(`Delete “${item.title}”?`, [{ label: "Delete", value: true, danger: true }, { label: "Keep it", value: false }],
         item.task_id ? "The task stays in its folder." : "");
@@ -230,6 +238,8 @@ export async function saveMove(item, changes, { personChanged = false } = {}) {
   try {
     if (item.source === "event") {
       await patch(`/api/events/${item.event_id}`, changes);
+    } else if (item.source === "external") {
+      await patch(`/api/external/${item.external_id}`, changes);
     } else if (item.source === "recurring") {
       const scope = await scopeQuestion(item, { allowThis: !personChanged, verb: "Move" });
       if (!scope) return false;

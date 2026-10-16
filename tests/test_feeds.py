@@ -49,8 +49,39 @@ def test_feed_items_on_calendar(client, db, family, monkeypatch):
     assert feeds.fetch_feed(db, feed, Client()) == 4
     items = client.get("/api/calendar?start=2026-10-19&end=2026-10-23").json()["items"]
     conf = next(i for i in items if i["all_day"])
-    assert conf["title"] == "Busy" and conf["read_only"] and conf["end_date"] == "2026-10-21"
+    assert conf["title"] == "Busy" and conf["source"] == "external" and conf["end_date"] == "2026-10-21"
     assert "ical_url" not in str(items)
+
+
+
+class _Client:
+    def get(self, url):
+        class Resp:
+            content = ICS
+            def raise_for_status(self): pass
+        return Resp()
+
+
+def test_editing_google_event_makes_local_copy(client, db, family, monkeypatch):
+    feed = CalendarFeed(member_id=family["Dad"], label="Dad", ical_url="https://example.invalid/x.ics")
+    db.add(feed)
+    db.commit()
+    monkeypatch.setattr(feeds, "now_local", lambda: datetime.datetime(2026, 10, 16, 9))
+    feeds.fetch_feed(db, feed, _Client())
+    cal = lambda: client.get("/api/calendar?start=2026-10-16&end=2026-10-30").json()["items"]
+    work = [i for i in cal() if i["title"] == "Work"]
+    assert len(work) == 3
+    # Drag the first week's "Work" an hour later: it becomes a planner item.
+    r = client.patch(f"/api/external/{work[0]['external_id']}", json={"start": "12:00", "end": "17:30"})
+    assert r.status_code == 200
+    # Delete the second week's: it's just hidden.
+    assert client.delete(f"/api/external/{work[1]['external_id']}").status_code == 200
+    # Both stick after Google is downloaded again.
+    feeds.fetch_feed(db, feed, _Client())
+    work = [i for i in cal() if i["title"] == "Work"]
+    assert [(i["source"], i["date"], i["start"]) for i in work] == [
+        ("event", "2026-10-16", "12:00"), ("external", "2026-10-30", "11:00")]
+    assert work[0]["from_google"] == "Dad" and work[0]["member_ids"] == [family["Dad"]]
 
 
 def test_redact_hides_secret():
