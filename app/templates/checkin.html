@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Check-in · {{ family_name }}{% endblock %}
+{% block body_attrs %}data-today="{{ today }}"{% endblock %}
+{% block body %}
+<div class="app">
+  <header class="topbar"><h1>Check-in</h1><a class="btn small" href="/">Calendar</a></header>
+  <main class="main" id="ci-root" style="padding-bottom:24px"></main>
+</div>
+<script type="module">
+  import { Checkin } from "/static/js/checkin.js?v={{ v }}";
+  new Checkin(document.getElementById("ci-root"), { today: () => document.body.dataset.today }).load();
+</script>
+{% endblock %}

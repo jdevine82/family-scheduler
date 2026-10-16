@@ -1,0 +1,17 @@
+{% extends "settings/_layout.html" %}
+{% block content %}
+<section class="panel">
+  <h2>Parent PIN</h2>
+  <p>This PIN opens Settings, and the Money tab asks for it before paying for jobs, fines, withdrawals and money setup. Keep it from the kids.</p>
+  <form method="post" action="/settings/money/pin" class="row" autocomplete="off">
+    <label class="field">New PIN (4–6 digits)<input type="password" name="pin" inputmode="numeric" pattern="[0-9]{4,6}" required autocomplete="new-password"></label>
+    <label class="field">Type it again<input type="password" name="pin2" inputmode="numeric" pattern="[0-9]{4,6}" required autocomplete="new-password"></label>
+    <div style="flex:0 0 auto"><button class="btn pri">Change PIN</button></div>
+  </form>
+</section>
+<section class="panel">
+  <h2>Children, weekly money and jobs</h2>
+  <p>Set these up on the Money tab under <b>⚙ Money setup</b> (it asks for the PIN).</p>
+  <div><a class="btn" href="/#money">Open the Money tab</a></div>
+</section>
+{% endblock %}

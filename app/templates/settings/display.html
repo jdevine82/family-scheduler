@@ -1,0 +1,56 @@
+{% extends "settings/_layout.html" %}
+{% block content %}
+<form method="post" action="/settings/display" class="stack" style="display:flex;flex-direction:column;gap:16px">
+<section class="panel">
+  <h2>Calendar</h2>
+  <div class="grid2">
+    <label class="field">Name at the top<input type="text" name="family_name" value="{{ s.family_name }}" maxlength="60"></label>
+    <label class="field">Week starts on<select name="week_starts_on"><option value="0" {% if s.week_starts_on == '0' %}selected{% endif %}>Monday</option><option value="6" {% if s.week_starts_on == '6' %}selected{% endif %}>Sunday</option></select></label>
+    <label class="field">Day view starts at<select name="display_start_hour">{% for h in range(0, 13) %}<option value="{{ h }}" {% if s.display_start_hour == h|string %}selected{% endif %}>{{ (h % 12) or 12 }} {{ 'am' if h < 12 else 'pm' }}</option>{% endfor %}</select></label>
+    <label class="field">Day view ends at<select name="display_end_hour">{% for h in range(14, 25) %}<option value="{{ h }}" {% if s.display_end_hour == h|string %}selected{% endif %}>{{ 'midnight' if h == 24 else ((h % 12) or 12)|string + (' am' if h < 12 else ' pm') }}</option>{% endfor %}</select></label>
+    <label class="field">Default time for tasks<input type="time" name="default_task_time" value="{{ s.default_task_time }}"></label>
+  </div>
+</section>
+<section class="panel">
+  <h2>Wall display</h2>
+  <div class="grid2">
+    <label class="field">Switch views every<select name="display_rotate_seconds">{% for v, l in [('0','Don\'t switch'),('20','20 seconds'),('30','30 seconds'),('60','1 minute'),('120','2 minutes'),('300','5 minutes')] %}<option value="{{ v }}" {% if s.display_rotate_seconds == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></label>
+    <div class="field"><b style="font-size:14px">Views to switch between</b>
+      <div class="btnrow">{% for v in ['day', 'week', 'month'] %}<label class="check"><input type="checkbox" name="rotate_{{ v }}" value="1" {% if v in s.display_rotate_views.split(',') %}checked{% endif %}> {{ v|capitalize }}</label>{% endfor %}</div></div>
+    <label class="field">Dim the screen from<input type="time" name="night_dim_start" value="{{ s.night_dim_start }}"></label>
+    <label class="field">until<input type="time" name="night_dim_end" value="{{ s.night_dim_end }}"></label>
+  </div>
+  <p class="help">Switching and dimming only happen after 2 minutes without a touch. A touch wakes the screen.</p>
+</section>
+<section class="panel">
+  <h2>Chimes</h2>
+  <div class="btnrow">
+    <label class="check"><input type="checkbox" name="chime_enabled" value="1" {% if s.chime_enabled == '1' %}checked{% endif %}> Chime on the wall when things start</label>
+    <label class="check"><input type="checkbox" name="chime_google_events" value="1" {% if s.chime_google_events == '1' %}checked{% endif %}> Also chime for Google calendar events</label>
+  </div>
+  <div class="grid2">
+    <label class="field">Volume<input type="range" name="chime_volume" min="10" max="100" step="10" value="{{ s.chime_volume }}" id="vol"></label>
+    <div class="field"><b style="font-size:14px">Test</b><button type="button" class="btn" id="test-chime">▶ Play test chime</button></div>
+    <label class="field">Quiet hours from (alerts still show, without sound)<input type="time" name="quiet_start" value="{{ s.quiet_start }}"></label>
+    <label class="field">until<input type="time" name="quiet_end" value="{{ s.quiet_end }}"></label>
+  </div>
+  <p class="help">Each family member's chime is set under Family members. Whole-family items use the Family fanfare.</p>
+</section>
+<section class="panel">
+  <h2>Check-in &amp; Google</h2>
+  <div class="grid2">
+    <label class="check"><input type="checkbox" name="checkin_on_display" value="1" {% if s.checkin_on_display == '1' %}checked{% endif %}> Show the Check-in button on the wall</label>
+    <label class="field">Ask about flexible jobs from the last<select name="checkin_lookback_days">{% for d in [3, 7, 14, 30] %}<option value="{{ d }}" {% if s.checkin_lookback_days == d|string %}selected{% endif %}>{{ d }} days</option>{% endfor %}</select></label>
+    <label class="field">Refresh Google calendars every<select name="feed_poll_minutes">{% for m in [5, 15, 30, 60] %}<option value="{{ m }}" {% if s.feed_poll_minutes == m|string %}selected{% endif %}>{{ m }} minutes</option>{% endfor %}</select></label>
+    <label class="field">Load Google events this far ahead<select name="feed_window_months">{% for m in [3, 6, 12, 18] %}<option value="{{ m }}" {% if s.feed_window_months == m|string %}selected{% endif %}>{{ m }} months</option>{% endfor %}</select></label>
+  </div>
+</section>
+<div class="btnrow"><button class="btn pri">Save settings</button></div>
+</form>
+{% endblock %}
+{% block scripts %}
+<script type="module">
+  import { playSequence, unlockAudio } from "/static/js/chime.js?v={{ v }}";
+  document.getElementById("test-chime").addEventListener("click", () => { unlockAudio(); playSequence(["family"], { volume: +document.getElementById("vol").value }); });
+</script>
+{% endblock %}

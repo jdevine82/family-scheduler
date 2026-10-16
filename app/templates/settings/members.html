@@ -1,0 +1,90 @@
+{% extends "settings/_layout.html" %}
+{% block content %}
+<section class="panel">
+  <h2>Family members</h2>
+  <p>Each person gets a lane on the calendar, a colour, and their own chime on the wall display.</p>
+  {% for m in members %}
+  <div class="member-row{% if not m.active %} inactive{% endif %}">
+    <form method="post" action="/settings/members/{{ m.id }}" class="stack" style="display:flex;flex-direction:column;gap:10px">
+      <div class="head"><i class="sw" style="--c:{{ m.color_hex }};width:16px;height:16px"></i><span class="nm">{{ m.name }}</span>{% if not m.active %}<span class="tag">Hidden</span>{% endif %}</div>
+      <div class="row">
+        <label class="field">Name<input type="text" name="name" value="{{ m.name }}" required maxlength="60"></label>
+        <label class="field" style="flex:0 0 90px">Initial / emoji<input type="text" name="short_label" value="{{ m.short_label }}" maxlength="8"></label>
+        <label class="field" style="flex:0 0 70px">Colour<input type="color" name="color" value="{{ m.color_hex }}"></label>
+        <label class="field">Chime
+          <span class="btnrow" style="flex-wrap:nowrap"><select name="chime_sound">{% for key, label in chime_sounds %}<option value="{{ key }}" {% if key == m.chime_sound %}selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+          <button type="button" class="icon-btn" data-preview aria-label="Play chime">▶</button></span></label>
+      </div>
+      <div class="btnrow"><button class="btn pri small">Save</button></div>
+    </form>
+    <div class="btnrow">
+      <form method="post" action="/settings/members/{{ m.id }}/move" class="inline-form"><input type="hidden" name="direction" value="up"><button class="btn small" aria-label="Move {{ m.name }} up">↑</button></form>
+      <form method="post" action="/settings/members/{{ m.id }}/move" class="inline-form"><input type="hidden" name="direction" value="down"><button class="btn small" aria-label="Move {{ m.name }} down">↓</button></form>
+      <form method="post" action="/settings/members/{{ m.id }}/active" class="inline-form"><input type="hidden" name="active" value="{{ '0' if m.active else '1' }}"><button class="btn small">{{ 'Hide from calendar' if m.active else 'Show on calendar' }}</button></form>
+      <form method="post" action="/settings/members/{{ m.id }}/delete" class="inline-form" data-confirm="Delete {{ m.name }}? Their Google calendars are removed too. This can't be undone."><button class="btn small danger">Delete</button></form>
+    </div>
+    <h3>Google calendars for {{ m.name }}</h3>
+    {% for f in m.feeds %}
+    <form class="feed" method="post" action="/settings/feeds/{{ f.id }}">
+      <div class="row"><label class="field">Label<input type="text" name="label" value="{{ f.label }}" required maxlength="100"></label></div>
+      <div class="btnrow">
+        <label class="check"><input type="checkbox" name="enabled" value="1" {% if f.enabled %}checked{% endif %}> Show on calendar</label>
+        <label class="check"><input type="checkbox" name="busy_only" value="1" {% if f.busy_only %}checked{% endif %}> Show as “Busy” only</label>
+        <label class="check"><input type="checkbox" name="chime" value="1" {% if f.chime %}checked{% endif %}> Chime when these start</label>
+      </div>
+      <span class="status{% if f.last_error %} err{% endif %}">{% if f.last_error %}⚠ {{ f.last_error }}{% elif f.last_fetched_at %}Last updated {{ f.last_fetched_at.strftime('%-d %b, %-I:%M %p') }}{% else %}Not loaded yet{% endif %}</span>
+      <div class="btnrow"><button class="btn small pri">Save</button><button class="btn small danger" formaction="/settings/feeds/{{ f.id }}/delete" data-confirm-btn="Remove “{{ f.label }}”?">Remove</button></div>
+    </form>
+    {% endfor %}
+    <details>
+      <summary class="linkbtn" style="display:inline-flex;align-items:center">＋ Add a Google calendar for {{ m.name }}</summary>
+      <form method="post" action="/settings/members/{{ m.id }}/feeds" class="feed" style="margin-top:8px">
+        <p class="help">In Google Calendar on a computer: <b>Settings</b> → pick the calendar on the left → <b>Integrate calendar</b> → copy <b>Secret address in iCal format</b>, and paste it here. It's read-only: nothing here changes Google.</p>
+        <div class="row">
+          <label class="field">Label<input type="text" name="label" placeholder="{{ m.name }} – work" required maxlength="100"></label>
+          <label class="field" style="flex-basis:100%">Secret iCal address<input type="url" name="ical_url" placeholder="https://calendar.google.com/calendar/ical/…/basic.ics" required></label>
+        </div>
+        <div class="btnrow">
+          <label class="check"><input type="checkbox" name="busy_only" value="1"> Show as “Busy” only</label>
+          <label class="check"><input type="checkbox" name="chime" value="1"> Chime when these start</label>
+        </div>
+        <div class="btnrow"><button class="btn pri small">Add calendar</button></div>
+      </form>
+    </details>
+  </div>
+  {% else %}
+  <p>No one yet. Add the first person below.</p>
+  {% endfor %}
+</section>
+
+<section class="panel">
+  <h2>Add a family member</h2>
+  <form method="post" action="/settings/members" class="row">
+    <label class="field">Name<input type="text" name="name" required maxlength="60"></label>
+    <label class="field" style="flex:0 0 90px">Initial / emoji<input type="text" name="short_label" maxlength="8"></label>
+    <label class="field" style="flex:0 0 70px">Colour<input type="color" name="color" value="{{ next_color }}"></label>
+    <label class="field">Chime
+      <span class="btnrow" style="flex-wrap:nowrap"><select name="chime_sound">{% for key, label in chime_sounds %}<option value="{{ key }}" {% if key == next_chime %}selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+      <button type="button" class="icon-btn" data-preview aria-label="Play chime">▶</button></span></label>
+    <div style="flex:0 0 auto"><button class="btn pri">Add</button></div>
+  </form>
+</section>
+
+<section class="panel">
+  <h2>Google calendars</h2>
+  <p>Calendars refresh by themselves every few minutes (see Display &amp; chimes). Refresh now if you've just changed something in Google.</p>
+  <form method="post" action="/settings/feeds/refresh"><button class="btn">Refresh all calendars now</button></form>
+</section>
+{% endblock %}
+{% block scripts %}
+<script type="module">
+  import { playChime, unlockAudio } from "/static/js/chime.js?v={{ v }}";
+  document.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-preview]");
+    if (!b) return;
+    unlockAudio();
+    playChime(b.closest("label").querySelector("select").value);
+  });
+</script>
+<script src="/static/js/confirm.js?v={{ v }}"></script>
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends "settings/_layout.html" %}
+{% block content %}
+<section class="panel">
+  <h2>Routines</h2>
+  <p>Everything that repeats each week. Add routines from the calendar (tick “Repeats every week”). To change one, tap it on the calendar.</p>
+  <div class="list">
+  {% for a in acts %}
+    <div class="item{% if not a.active or (a.valid_until and a.valid_until < today) %} inactive{% endif %}">
+      <div class="grow">
+        <b>{{ a.title }}</b>{% if a.kind == 'flexible' %} <span class="tag flexk">Flexible</span>{% endif %}{% if not a.active %} <span class="tag">Paused</span>{% endif %}
+        <div class="muted" style="font-size:13.5px">
+          {% for d in a.weekday_list %}{{ weekday_names[d] }}{% if not loop.last %}, {% endif %}{% endfor %}{% if a.interval_weeks > 1 %} · every {{ a.interval_weeks }} weeks{% endif %}
+          · {% if a.all_day %}all day{% else %}{{ a.start_time.strftime('%-I:%M %p').lower() }}–{{ a.end_time.strftime('%-I:%M %p').lower() }}{% endif %}
+          · {% if a.is_everyone %}Everyone{% else %}{% for m in a.members %}{{ m.name }}{% if not loop.last %} & {% endif %}{% endfor %}{% endif %}
+          {% if a.valid_until %}· until {{ a.valid_until.strftime('%-d %b %Y') }}{% endif %}
+          {% if a.remind_minutes %}· 🔔 {{ a.remind_minutes }} min reminder{% endif %}
+        </div>
+      </div>
+      <form method="post" action="/settings/routines/{{ a.id }}/active" class="inline-form"><input type="hidden" name="active" value="{{ '0' if a.active else '1' }}"><button class="btn small">{{ 'Pause' if a.active else 'Resume' }}</button></form>
+      <form method="post" action="/settings/routines/{{ a.id }}/delete" class="inline-form" data-confirm="Delete “{{ a.title }}” and all its weeks?"><button class="btn small danger">Delete</button></form>
+    </div>
+  {% else %}
+    <p>No routines yet.</p>
+  {% endfor %}
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}<script src="/static/js/confirm.js?v={{ v }}"></script>{% endblock %}

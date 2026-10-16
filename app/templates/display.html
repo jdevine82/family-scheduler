@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}{{ family_name }} · Wall{% endblock %}
+{% block body_class %}wall{% endblock %}
+{% block body %}
+<div class="wall-root" id="wall">
+  <header class="wtop">
+    <div class="brand">{{ family_name }}</div>
+    <div class="seg apptabs" id="w-tabs" role="tablist" aria-label="Section">
+      <button data-tab="cal" aria-pressed="true">📅 Calendar</button><button data-tab="money" aria-pressed="false">💰 Money</button>
+    </div>
+    <div class="when"><div class="wdate" id="w-title"></div><div class="next" id="w-next"></div></div>
+    <button class="icon-btn sound-btn" id="w-sound" aria-pressed="false" aria-label="Mute chimes" title="Chimes on. Tap to mute.">🔊</button>
+    <div class="clock" id="w-clock"></div>
+    <div class="seg cal-only" id="w-seg" role="group" aria-label="View">
+      <button data-view="day" aria-pressed="true">Day</button><button data-view="week" aria-pressed="false">Week</button><button data-view="month" aria-pressed="false">Month</button>
+    </div>
+    <button class="icon-btn cal-only" id="w-prev" aria-label="Previous">‹</button>
+    <button class="btn cal-only" id="w-today">Today</button>
+    <button class="icon-btn cal-only" id="w-fwd" aria-label="Next">›</button>
+    <button class="btn edit-btn cal-only" id="w-edit" aria-pressed="false">✏️ Edit</button>
+    <button class="btn tasks-btn cal-only" id="w-tasks" aria-expanded="false">☑ Tasks</button>
+    <a class="icon-btn" href="/settings" aria-label="Settings (parent PIN)">⚙</a>
+    <button class="ci-btn cal-only" id="w-ci" data-zero="true">Check-in <span class="count">0</span></button>
+  </header>
+  <div class="editbar cal-only" id="w-editbar" hidden>
+    <span>✏️ <b>Editing.</b> Tap empty space to add · tap an item to change it · hold and drag to move · drag the bottom edge to resize. Changes save straight away.</span>
+    <button class="btn pri" id="w-edit-done">Done</button>
+  </div>
+  <div class="wbody" id="w-body"><div id="w-cal" class="cal-only"></div><div id="w-money" class="money-only"></div></div>
+  <aside class="drawer" id="w-drawer" hidden aria-label="Tasks">
+    <div class="dhead"><h3>Tasks</h3><button id="w-drawer-x" aria-label="Close tasks">✕</button></div>
+    <div class="screen" id="w-tasks-host" style="min-height:0"></div>
+    <div class="dfoot">Hold a task, then drag it onto someone's lane, or tap Schedule. Closes after a minute without a touch.</div>
+  </aside>
+  <div id="w-alert"></div>
+  <footer class="wfoot cal-only"><div class="legend" id="w-legend"></div><span class="tip">Tap an event for details · swipe to change day · returns to today after 2 minutes</span></footer>
+</div>
+<div class="dim" id="w-dim" hidden></div>
+<script type="module" src="/static/js/display.js?v={{ v }}"></script>
+{% endblock %}

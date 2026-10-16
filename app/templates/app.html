@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block body_attrs %}data-today="{{ today }}"{% endblock %}
+{% block body %}
+<script>
+  // Computers and tablets use the wall view (with its Edit toggle); this page is the phone layout.
+  // Add ?phone to the address to force the phone layout on a big screen.
+  if (matchMedia("(min-width: 900px)").matches && !location.search.includes("phone")) {
+    location.replace("/display" + (location.hash === "#money" ? "#money" : ""));
+  }
+</script>
+<div class="app">
+  <header class="topbar">
+    <span class="brand">{{ family_name }}</span><span class="divider desk-only"></span>
+    <div class="seg apptabs desk-only" id="apptabs" role="tablist" aria-label="Section">
+      <button data-tab="cal" aria-pressed="true">📅 Calendar</button><button data-tab="money" aria-pressed="false">💰 Money</button>
+    </div>
+    <h1 class="money-only">Pocket money</h1>
+    <div class="seg cal-only" id="viewseg" role="group" aria-label="View">
+      <button data-view="day" aria-pressed="true">Day</button><button data-view="week" aria-pressed="false">Week</button><button data-view="month" aria-pressed="false">Month</button>
+    </div>
+    <button class="icon-btn cal-only" id="prev" aria-label="Previous">‹</button>
+    <h1 id="title" class="cal-only"></h1>
+    <button class="btn small cal-only" id="today">Today</button>
+    <button class="icon-btn cal-only" id="next" aria-label="Next">›</button>
+    <div class="right">
+      <button class="ci-btn desk-only cal-only" id="ci-btn" data-zero="true">Check-in <span class="count">0</span></button>
+      <a class="btn small desk-only" href="/display" title="Open the wall display">Wall</a>
+      <a class="icon-btn desk-only" href="/settings" aria-label="Settings (parent PIN)">⚙</a>
+    </div>
+  </header>
+  <div class="layout">
+    <aside class="sidebar cal-only" id="sidebar" aria-label="Tasks"></aside>
+    <main class="main" id="main">
+      <section class="screen" data-screen="cal">
+        <nav class="memberbar phone-only" id="memberbar" aria-label="Show"></nav>
+        <div id="cal"></div>
+      </section>
+      <section class="screen" data-screen="tasks" id="tasks-screen" hidden></section>
+      <section class="screen" data-screen="checkin" id="checkin-screen" hidden></section>
+      <section class="screen" data-screen="money" id="money-screen" hidden></section>
+      <section class="screen" data-screen="more" hidden>
+        <div class="morelist">
+          <button class="btn" id="more-report">📊 Weekly reports</button>
+          <a class="btn" href="/display">🖥 Wall display</a>
+          <a class="btn" href="/checkin">✓ Check-in page</a>
+          <a class="btn" href="/settings">⚙ Settings (parent PIN)</a>
+        </div>
+      </section>
+    </main>
+  </div>
+  <button class="fab cal-only" id="fab" aria-label="Add to the calendar">+</button>
+  <nav class="bottomnav" aria-label="Sections">
+    <button data-nav="cal" aria-current="page"><span class="ic">📅</span>Calendar</button>
+    <button data-nav="tasks"><span class="ic">☑</span>Tasks</button>
+    <button data-nav="money"><span class="ic">💰</span>Money</button>
+    <button data-nav="checkin" id="nav-ci"><span class="ic">✓</span>Check-in<span class="badge" hidden>0</span></button>
+    <button data-nav="more"><span class="ic">⋯</span>More</button>
+  </nav>
+</div>
+<script type="module" src="/static/js/app.js?v={{ v }}"></script>
+{% endblock %}

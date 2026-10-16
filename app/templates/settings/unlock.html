@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Settings · {{ family_name }}{% endblock %}
+{% block body %}
+<div class="login-page">
+  <form class="login-card" method="post" action="/settings/unlock" autocomplete="off">
+    <h1>🔒 {{ "Parent PIN" if pin_set else "Choose a parent PIN" }}</h1>
+    <p class="muted" style="margin:0">{% if pin_set %}Settings are for parents. Enter the parent PIN.{% else %}This PIN protects Settings and pocket money (paying for jobs, fines and withdrawals). Use 4 to 6 digits and keep it from the kids.{% endif %}</p>
+    {% if error %}<div class="flash error" role="alert">{{ error }}</div>{% endif %}
+    <input type="hidden" name="next" value="{{ next }}">
+    <label class="field">PIN<input type="password" name="pin" inputmode="numeric" pattern="[0-9]{4,6}" maxlength="6" required autofocus autocomplete="off"></label>
+    {% if not pin_set %}<label class="field">Type it again<input type="password" name="pin2" inputmode="numeric" pattern="[0-9]{4,6}" maxlength="6" required autocomplete="off"></label>{% endif %}
+    <button class="btn pri" type="submit">{{ "Open settings" if pin_set else "Save PIN and open settings" }}</button>
+    <a href="/" class="muted" style="text-align:center">‹ Back to the calendar</a>
+  </form>
+</div>
+{% endblock %}

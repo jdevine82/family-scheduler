@@ -1,0 +1,18 @@
+{% extends "settings/_layout.html" %}
+{% block content %}
+<section class="panel">
+  <h2>Download a backup</h2>
+  <p>A single file with everything: family, routines, events, tasks, pocket money and settings.</p>
+  <div><a class="btn pri" href="/settings/backup/download">Download backup</a></div>
+</section>
+<section class="panel">
+  <h2>Restore from a backup</h2>
+  <p>Replaces <b>everything</b> in the app with the backup. A safety copy of what's there now is saved first.</p>
+  <form method="post" action="/settings/backup/restore" enctype="multipart/form-data" class="row" data-confirm="Replace everything with this backup?">
+    <label class="field">Backup file<input type="file" name="backup_file" accept=".db" required></label>
+    <div style="flex:0 0 auto"><button class="btn danger">Restore</button></div>
+  </form>
+  {% if pre_restore_backups %}<p class="help">Safety copies on the server: {{ pre_restore_backups|join(', ') }}</p>{% endif %}
+</section>
+{% endblock %}
+{% block scripts %}<script src="/static/js/confirm.js?v={{ v }}"></script>{% endblock %}

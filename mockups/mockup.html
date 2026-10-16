@@ -1,0 +1,887 @@
+<title>Family Calendar Mockup</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: mockup shell → stage switcher → (A) touch wall screen with Day/Week/Month, (B) three phone frames. Tokens follow the Job Scheduler style guide. */
+:root{
+  --page:#EDF1F4; --base:#FBFCFD; --panel:#FFFFFF; --elev:#F3F6F8; --hover:#E9EEF2;
+  --line:#E2E7EB; --line2:#C7D0D8;
+  --fg:#24292F; --fg2:#57606A; --mute:#8B95A1;
+  --accent:#1095C1; --accent2:#0D7EA3; --on-accent:#FFFFFF;
+  --amber:#B45309; --ok:#15803D; --scrim:rgba(20,28,36,.45); --frame:#1E252C;
+  --mum:#DB2777; --dad:#2563EB; --sam:#65A30D; --ella:#7C3AED;
+  --sans:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --hh:46px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --page:#0B1014; --base:#11171C; --panel:#161D23; --elev:#1C242B; --hover:#242E37;
+  --line:#28323B; --line2:#3A4651; --fg:#E5E9ED; --fg2:#A7B1BB; --mute:#76828E;
+  --accent:#36AEDA; --accent2:#5CC0E4; --on-accent:#06212C;
+  --amber:#F0A238; --ok:#4ACB7A; --scrim:rgba(0,0,0,.6); --frame:#2C353E;
+  --mum:#EC4E9A; --dad:#5B8DEF; --sam:#86C232; --ella:#9D74F2; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --page:#0B1014; --base:#11171C; --panel:#161D23; --elev:#1C242B; --hover:#242E37;
+  --line:#28323B; --line2:#3A4651; --fg:#E5E9ED; --fg2:#A7B1BB; --mute:#76828E;
+  --accent:#36AEDA; --accent2:#5CC0E4; --on-accent:#06212C;
+  --amber:#F0A238; --ok:#4ACB7A; --scrim:rgba(0,0,0,.6); --frame:#2C353E;
+  --mum:#EC4E9A; --dad:#5B8DEF; --sam:#86C232; --ella:#9D74F2; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--page);color:var(--fg);font-family:var(--sans);font-size:14px;line-height:1.4;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+/* ---------- mockup shell ---------- */
+.shell{max-width:1320px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+.shell-head{display:flex;flex-wrap:wrap;align-items:end;justify-content:space-between;gap:12px}
+.shell-head h1{margin:0;font-size:20px;font-weight:600;text-wrap:balance}
+.shell-head p{margin:4px 0 0;color:var(--fg2);max-width:70ch}
+.stages{display:flex;border:1px solid var(--line2);border-radius:8px;overflow:hidden;background:var(--panel)}
+.stages button{border:0;background:none;padding:9px 18px;font-weight:500;color:var(--fg2)}
+.stages button[aria-pressed="true"]{background:var(--accent);color:var(--on-accent);font-weight:600}
+.notes{display:flex;flex-wrap:wrap;gap:8px 18px;color:var(--fg2);font-size:13px}
+.notes span{display:inline-flex;align-items:center;gap:6px}
+.key{display:inline-block;width:22px;height:14px;border-radius:3px;background:color-mix(in srgb,var(--dad) 16%,var(--panel));border-left:3px solid var(--dad)}
+.key.flex{border:1.5px dashed var(--dad);border-left:3px solid var(--dad)}
+.key.kev{background:color-mix(in srgb,var(--accent) 24%,var(--panel));border-left-color:var(--accent)}
+.key.g{border-left:3px solid transparent;background-image:repeating-linear-gradient(45deg,var(--dad) 0 3px,transparent 3px 6px);background-size:3px 100%;background-repeat:no-repeat;background-color:color-mix(in srgb,var(--dad) 16%,var(--panel))}
+.dot-amber{width:9px;height:9px;border-radius:50%;background:var(--amber);display:inline-block}
+
+/* ---------- wall screen ---------- */
+.wall-wrap{overflow-x:auto;border-radius:14px}
+.wall{min-width:1000px;background:var(--base);border:1px solid var(--line);border-radius:14px;overflow:hidden;position:relative}
+.wtop{display:flex;align-items:center;gap:20px;padding:14px 22px;background:var(--panel);border-bottom:1px solid var(--line)}
+.wtop .brand{font-weight:700;font-size:17px;letter-spacing:.01em;white-space:nowrap}
+.wtop .when{min-width:0;flex:1}
+.wtop .next{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wtop button,.wtop .clock{white-space:nowrap;flex:none}
+.wtop .when{display:flex;flex-direction:column}
+.wtop .wdate{font-size:21px;font-weight:600}
+.wtop .next{font-size:14.5px;color:var(--fg2)}
+.wtop .next b{color:var(--fg);font-weight:600}
+.wtop .clock{font-family:var(--mono);font-size:32px;font-weight:600;font-variant-numeric:tabular-nums}
+.seg{display:flex;border:1px solid var(--line2);border-radius:10px;overflow:hidden}
+.seg button{border:0;background:var(--panel);padding:10px 16px;font-size:15px;font-weight:500;color:var(--fg2);min-height:44px}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--on-accent);font-weight:600}
+.navbtns{display:flex;gap:6px}
+.navbtns button{min-width:44px;min-height:44px;border:1px solid var(--line2);background:var(--panel);border-radius:10px;font-size:15px;padding:0 12px}
+.ci-btn{display:inline-flex;align-items:center;gap:10px;border:0;border-radius:999px;background:var(--accent);color:var(--on-accent);font-weight:600;font-size:16px;padding:0 20px;min-height:52px}
+.ci-btn .count{background:var(--on-accent);color:var(--accent);border-radius:999px;min-width:26px;height:26px;display:inline-grid;place-items:center;font-size:14px;font-family:var(--mono)}
+.ci-btn[data-zero="true"]{background:var(--elev);color:var(--fg2)}
+.ci-btn[data-zero="true"] .count{display:none}
+
+/* day view */
+.day{display:grid;grid-template-columns:70px 1fr}
+.lanehead{display:grid;background:var(--panel);border-bottom:1px solid var(--line)}
+.lanehead div{display:flex;align-items:center;justify-content:center;gap:9px;padding:11px 0;font-size:17px;font-weight:600;border-left:1px solid var(--line)}
+.sw{width:13px;height:13px;border-radius:50%;background:var(--c);flex:none}
+.allday-lab,.gut-head{font-size:12px;color:var(--mute);display:flex;align-items:center;justify-content:flex-end;padding-right:10px;background:var(--panel)}
+.gut-head{border-bottom:1px solid var(--line)}
+.allday{display:grid;gap:6px 0;padding:8px 0;background:var(--elev);border-bottom:1px solid var(--line)}
+.allday-lab{background:var(--elev);border-bottom:1px solid var(--line)}
+.adchip{margin:0 4px;padding:7px 10px;border-radius:6px;font-size:15px;font-weight:600;background:color-mix(in srgb,var(--c) 18%,var(--panel));border-left:4px solid var(--c);cursor:pointer;text-align:left;border-top:0;border-right:0;border-bottom:0;display:flex;gap:8px;align-items:center}
+.gutter{position:relative;height:calc(var(--hh)*15)}
+.gutter span{position:absolute;right:10px;transform:translateY(-50%);font-family:var(--mono);font-size:12px;color:var(--mute)}
+.lanes{position:relative;height:calc(var(--hh)*15);background-image:repeating-linear-gradient(to bottom,var(--line) 0 1px,transparent 1px var(--hh))}
+.lanecol{position:absolute;top:0;bottom:0;border-left:1px solid var(--line)}
+.ev{position:absolute;border-radius:7px;padding:6px 9px;overflow:hidden;text-align:left;
+  background:color-mix(in srgb,var(--c) 16%,var(--panel));border:0;border-left:4px solid var(--c);display:flex;flex-direction:column;gap:2px}
+.ev:hover{filter:brightness(.98)}
+.ev .et{font-size:15.5px;font-weight:600;line-height:1.2;display:flex;align-items:center;gap:6px}
+.ev .tm{font-family:var(--mono);font-size:12.5px;color:var(--fg2)}
+.ev .sub{font-size:12.5px;color:var(--fg2)}
+.ev.flex,.chip.flex,.li.flex{outline:1.5px dashed color-mix(in srgb,var(--c) 75%,transparent);outline-offset:-1.5px}
+.ev.everyone{background:color-mix(in srgb,var(--accent) 22%,var(--panel));border-left-color:var(--accent);align-items:center;justify-content:center;flex-direction:row;gap:14px}
+.ev.everyone .et{font-size:17px}
+.ev.g{border-left-color:transparent;background-image:repeating-linear-gradient(45deg,var(--c) 0 4px,transparent 4px 8px);background-size:4px 100%;background-repeat:no-repeat}
+.ev.past{opacity:.5}
+.ev.resched,.chip.resched{opacity:.35;text-decoration:line-through}
+.bdg{display:inline-grid;place-items:center;font-size:11px;font-weight:700;line-height:1;border-radius:4px;padding:2px 4px;background:var(--panel);color:var(--fg2);border:1px solid var(--line)}
+.bdg.g{color:var(--dad)}
+.st{font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:5px}
+.st.check{color:var(--amber)} .st.done{color:var(--ok)} .st.underway{color:var(--accent2)}
+.nowline{position:absolute;left:0;right:0;height:2px;background:var(--accent);z-index:5;pointer-events:none}
+.nowline::before{content:"";position:absolute;left:-6px;top:-5px;width:12px;height:12px;border-radius:50%;background:var(--accent)}
+.nowlab{position:absolute;right:6px;transform:translateY(-50%);font-family:var(--mono);font-size:12px;font-weight:600;color:var(--on-accent);background:var(--accent);padding:1px 5px;border-radius:4px;z-index:6}
+
+/* week agenda view */
+.week{display:grid;grid-template-columns:128px repeat(7,minmax(0,1fr))}
+.week > div{border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:8px;min-width:0}
+.week .wh{background:var(--panel);font-weight:600;font-size:15px;text-align:center;padding:12px 4px}
+.week .wh small{display:block;font-weight:500;color:var(--mute);font-size:12px}
+.week .today{background:color-mix(in srgb,var(--accent) 8%,var(--base))}
+.week .wh.today{color:var(--accent2);background:color-mix(in srgb,var(--accent) 12%,var(--panel))}
+.week .rl{display:flex;align-items:center;gap:9px;font-weight:600;font-size:16px;background:var(--panel)}
+.cell{display:flex;flex-direction:column;gap:5px;min-height:96px}
+.chip{display:block;width:100%;text-align:left;border:0;border-left:3px solid var(--c);border-radius:5px;padding:5px 7px;background:color-mix(in srgb,var(--c) 15%,var(--panel));font-size:13.5px;line-height:1.25;overflow-wrap:anywhere}
+.chip .tm{display:block;font-family:var(--mono);font-size:11.5px;color:var(--fg2)}
+.chip.everyone{--c:var(--accent)}
+.chip.past{opacity:.5}
+.chip.g{border-left-style:dotted;border-left-width:4px}
+.chip .mk{float:right;margin-left:4px;font-size:11px}
+
+/* month view */
+.month{display:grid;grid-template-columns:repeat(7,minmax(0,1fr))}
+.month .mh{background:var(--panel);text-align:center;font-weight:600;font-size:13px;color:var(--fg2);padding:9px;border-bottom:1px solid var(--line)}
+.mc{min-height:118px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:6px 0 6px;display:flex;flex-direction:column;gap:3px;min-width:0}
+.mc.other{background:var(--elev)}
+.mc.other .dn{color:var(--mute)}
+.mc .dn{font-family:var(--mono);font-size:13px;font-weight:600;padding:0 8px;display:flex;justify-content:space-between;align-items:center}
+.mc.today .dn b{background:var(--accent);color:var(--on-accent);border-radius:999px;padding:1px 7px}
+.mchip{font-size:12.5px;margin:0 5px;padding:3px 6px;border-radius:4px;background:color-mix(in srgb,var(--c) 17%,var(--panel));border-left:3px solid var(--c);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-top:0;border-right:0;border-bottom:0;text-align:left}
+.mchip.bar{border-radius:0;margin:0;border-left:0;padding-left:8px}
+.mchip.bar.start{border-radius:4px 0 0 4px;margin-left:5px;border-left:3px solid var(--c)}
+.mchip.bar.end{border-radius:0 4px 4px 0;margin-right:5px}
+.mchip.bar.mid .lbl,.mchip.bar.end .lbl{visibility:hidden}
+.mchip.bar.wkstart .lbl{visibility:visible}
+.mchip.flex{outline:1.5px dashed color-mix(in srgb,var(--c) 75%,transparent);outline-offset:-1.5px}
+.rdots{display:flex;gap:4px;padding:0 8px;margin-top:auto}
+.rdots i{width:7px;height:7px;border-radius:50%;background:var(--c)}
+.more{font-size:12px;color:var(--fg2);padding:0 8px}
+
+.wfoot{display:flex;gap:18px;align-items:center;padding:10px 22px;background:var(--panel);border-top:1px solid var(--line);font-size:13px;color:var(--fg2);flex-wrap:wrap}
+.wfoot .legend{display:flex;gap:14px}
+.wfoot .legend span{display:inline-flex;align-items:center;gap:6px}
+.wfoot .tip{margin-left:auto}
+
+/* overlays */
+.ovl{position:fixed;inset:0;background:var(--scrim);display:grid;place-items:center;z-index:50;padding:16px}
+.sheet{background:var(--panel);border-radius:16px;width:min(640px,100%);max-height:calc(100% - 32px);overflow:auto;box-shadow:0 1px 2px rgba(0,0,0,.08),0 20px 60px rgba(0,0,0,.25);position:relative}
+.sheet .x{position:absolute;right:10px;top:10px;width:44px;height:44px;border:0;background:var(--elev);border-radius:50%;font-size:18px}
+.detail{padding:24px 26px 26px;display:flex;flex-direction:column;gap:12px}
+.detail h2{margin:0;font-size:24px;padding-right:50px}
+.detail .row{display:flex;gap:10px;align-items:center;color:var(--fg2);font-size:15px;flex-wrap:wrap}
+.pill{display:inline-flex;align-items:center;gap:7px;border-radius:999px;padding:5px 11px;font-size:14px;font-weight:600;background:color-mix(in srgb,var(--c) 16%,var(--panel));color:var(--fg)}
+.pill .sw{width:10px;height:10px}
+
+/* check-in (shared by wall overlay and phone) */
+.ci{display:flex;flex-direction:column;gap:16px;padding:22px}
+.ci h3{margin:0;font-size:22px;text-wrap:balance}
+.ci .lede{margin:-8px 0 0;color:var(--fg2)}
+.who{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.who button{border:1px solid var(--line2);background:var(--panel);border-radius:14px;padding:16px 10px;display:flex;flex-direction:column;align-items:center;gap:8px;min-height:120px}
+.who .av{width:52px;height:52px;border-radius:50%;background:var(--c);color:#fff;display:grid;place-items:center;font-size:22px;font-weight:700}
+.who .nm{font-size:17px;font-weight:600}
+.who .ct{font-size:13px;color:var(--amber);font-weight:600}
+.who .ct.zero{color:var(--ok)}
+.card{border:1px solid var(--line);border-left:5px solid var(--c);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:6px;background:var(--base)}
+.card .prog{font-size:12.5px;color:var(--mute);font-weight:600}
+.card .ttl{font-size:22px;font-weight:700;line-height:1.2}
+.card .meta{color:var(--fg2);font-size:14.5px}
+.acts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.acts button{min-height:64px;border-radius:12px;border:1px solid var(--line2);background:var(--panel);font-size:16px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:8px;padding:8px}
+.acts .a-done{background:color-mix(in srgb,var(--ok) 14%,var(--panel));border-color:color-mix(in srgb,var(--ok) 45%,var(--line2))}
+.acts .a-under{background:color-mix(in srgb,var(--accent) 12%,var(--panel));border-color:color-mix(in srgb,var(--accent) 40%,var(--line2))}
+.acts .a-res{background:color-mix(in srgb,var(--amber) 12%,var(--panel));border-color:color-mix(in srgb,var(--amber) 40%,var(--line2))}
+.sub-q{display:flex;flex-direction:column;gap:10px;border:1px solid var(--line);border-radius:12px;padding:14px;background:var(--elev)}
+.sub-q label{font-weight:600}
+.sub-q .inrow{display:flex;gap:8px;flex-wrap:wrap}
+.sub-q input{min-height:46px;border:1px solid var(--line2);border-radius:10px;padding:0 10px;font:inherit;background:var(--panel);color:var(--fg);flex:1 1 130px;min-width:0}
+.btn{min-height:52px;border-radius:12px;border:1px solid var(--line2);background:var(--panel);font-weight:600;padding:0 16px}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.linkbtn{border:0;background:none;color:var(--accent2);font-weight:600;padding:8px 0;align-self:flex-start;min-height:44px}
+.toast{background:var(--fg);color:var(--panel);border-radius:10px;padding:10px 14px;font-weight:600;align-self:center}
+.caught{text-align:center;padding:30px 10px;display:flex;flex-direction:column;gap:10px;align-items:center}
+.caught .big{font-size:44px}
+
+/* ---------- phones ---------- */
+.phones{display:flex;flex-wrap:wrap;gap:28px;justify-content:center}
+.pcol{display:flex;flex-direction:column;gap:8px;align-items:center;max-width:100%}
+.pcol > p{margin:0;color:var(--fg2);font-size:13px;text-align:center;max-width:340px}
+.phone{width:360px;max-width:100%;height:760px;border:10px solid var(--frame);border-radius:40px;background:var(--base);display:flex;flex-direction:column;overflow:hidden;position:relative}
+.pstat{display:flex;justify-content:space-between;padding:8px 22px 4px;font-family:var(--mono);font-size:12px;font-weight:600;background:var(--panel)}
+.phead{background:var(--panel);padding:6px 16px 10px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:10px}
+.phead .r1{display:flex;align-items:center;gap:8px}
+.phead h2{margin:0;font-size:20px;flex:1}
+.phead .r1 button{width:40px;height:40px;border:1px solid var(--line2);background:var(--panel);border-radius:10px}
+.pseg{display:flex;border:1px solid var(--line2);border-radius:9px;overflow:hidden}
+.pseg button{flex:1;border:0;background:none;padding:8px 0;font-weight:500;color:var(--fg2)}
+.pseg button[aria-pressed="true"]{background:var(--accent);color:var(--on-accent);font-weight:600}
+.mchips{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
+.mchips button{flex:none;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line2);background:var(--panel);border-radius:999px;padding:6px 12px;font-weight:600;font-size:13.5px;min-height:36px}
+.mchips button[aria-pressed="true"]{background:color-mix(in srgb,var(--c,var(--accent)) 18%,var(--panel));border-color:var(--c,var(--accent))}
+.pbody{flex:1;overflow-y:auto;padding:12px 14px 90px;display:flex;flex-direction:column;gap:8px;min-height:0}
+.sec{font-size:12px;font-weight:600;color:var(--mute);margin-top:6px}
+.li{display:flex;gap:10px;align-items:stretch;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px;text-align:left;width:100%}
+.li .bar{width:4px;border-radius:2px;background:var(--c);flex:none}
+.li .bars{display:flex;gap:2px}
+.li .t{font-family:var(--mono);font-size:12px;color:var(--fg2);width:62px;flex:none;padding-top:2px}
+.li .b{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.li .b strong{font-size:15px}
+.li .b small{color:var(--fg2);font-size:12.5px;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.li.past{opacity:.55}
+.li.nowmark{border-color:var(--accent)}
+.nowrow{display:flex;align-items:center;gap:8px;color:var(--accent2);font-family:var(--mono);font-size:12px;font-weight:600}
+.nowrow::after{content:"";flex:1;height:2px;background:var(--accent)}
+.fab{position:absolute;right:16px;bottom:84px;width:56px;height:56px;border-radius:50%;border:0;background:var(--accent);color:var(--on-accent);font-size:28px;box-shadow:0 6px 16px rgba(0,0,0,.2)}
+.pnav{position:absolute;left:0;right:0;bottom:0;display:grid;grid-template-columns:repeat(4,1fr);background:var(--panel);border-top:1px solid var(--line);padding:6px 4px 10px}
+.pnav button{border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11.5px;font-weight:500;color:var(--fg2);min-height:52px;position:relative}
+.pnav .ic{font-size:20px;line-height:1}
+.pnav button[aria-current="page"]{color:var(--accent2);font-weight:700}
+.pnav .badge{position:absolute;top:0;left:calc(50% + 6px);background:var(--amber);color:#fff;border-radius:999px;font-size:11px;min-width:18px;height:18px;display:grid;place-items:center;font-family:var(--mono)}
+.folder{flex:none;background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.fhead{display:flex;align-items:center;gap:8px;padding:12px 12px;width:100%;border:0;background:none;font-weight:700;font-size:15px;text-align:left}
+.fhead .n{margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--mute);font-weight:600}
+.fhead .car{color:var(--mute);width:14px}
+.task{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-top:1px solid var(--line)}
+.tick{width:24px;height:24px;border-radius:50%;border:2px solid var(--line2);background:none;flex:none;margin-top:1px;display:grid;place-items:center;font-size:13px;color:var(--on-accent)}
+.task.done .tick{background:var(--ok);border-color:var(--ok)}
+.task.done .tt{text-decoration:line-through;color:var(--mute)}
+.task .tb{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.task .tt{font-size:14.5px;font-weight:500}
+.tags{display:flex;gap:5px;flex-wrap:wrap}
+.tag{font-size:11.5px;font-weight:600;border-radius:999px;padding:2px 8px;background:var(--elev);color:var(--fg2)}
+.tag.check{background:color-mix(in srgb,var(--amber) 15%,var(--panel));color:var(--amber)}
+.tag.under{background:color-mix(in srgb,var(--accent) 14%,var(--panel));color:var(--accent2)}
+.tag.push{background:color-mix(in srgb,var(--amber) 10%,var(--panel));color:var(--amber)}
+.tag.flexk{border:1px dashed var(--line2);background:none}
+.task .sch{border:1px solid var(--line2);background:var(--panel);border-radius:8px;font-size:12.5px;font-weight:600;padding:6px 9px;flex:none;min-height:34px}
+.addt{display:flex;gap:8px;align-items:center;padding:10px 12px;border-top:1px solid var(--line);color:var(--mute);font-size:14px}
+.hint{flex:none;font-size:12.5px;color:var(--fg2);background:var(--elev);border-radius:10px;padding:9px 11px}
+
+/* wall task drawer */
+.tasks-btn{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line2);background:var(--panel);border-radius:999px;font-weight:600;font-size:16px;padding:0 18px;min-height:52px}
+.tasks-btn[aria-expanded="true"]{background:color-mix(in srgb,var(--accent) 14%,var(--panel));border-color:var(--accent)}
+.drawer{position:absolute;left:0;top:var(--dtop,81px);bottom:0;width:390px;background:var(--panel);border-right:1px solid var(--line);box-shadow:8px 0 30px rgba(0,0,0,.14);z-index:20;display:flex;flex-direction:column;transition:opacity .15s}
+.drawer.dragging{opacity:.15;pointer-events:none}
+.dhead{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.dhead h3{margin:0;font-size:19px;flex:1}
+.dhead button{width:44px;height:44px;border-radius:50%;border:0;background:var(--elev);font-size:17px}
+.dbody{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:10px;min-height:0}
+.dfoot{font-size:12.5px;color:var(--mute);padding:10px 16px;border-top:1px solid var(--line)}
+.big .task{padding:13px 14px}
+.big .task .tt{font-size:16px}
+.big .tick{width:30px;height:30px}
+.big .task .sch{min-height:42px;font-size:14px;padding:0 12px}
+.big .fhead{font-size:16.5px;padding:14px}
+[data-drag]{cursor:grab;touch-action:pan-y;user-select:none;-webkit-user-select:none}
+[data-drag]:active{cursor:grabbing}
+.ghost{position:fixed;z-index:200;pointer-events:none;background:var(--panel);border:1px solid var(--line2);border-left:4px solid var(--accent);border-radius:8px;padding:9px 12px;font-weight:600;box-shadow:0 12px 30px rgba(0,0,0,.25);transform:translate(12px,-50%);max-width:260px}
+.drop-prev{position:absolute;z-index:4;pointer-events:none;border:2px dashed var(--accent);border-radius:7px;background:color-mix(in srgb,var(--accent) 12%,transparent);font-family:var(--mono);font-size:12px;font-weight:600;color:var(--accent2);padding:4px 7px}
+.gtoast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:300;background:var(--fg);color:var(--panel);border-radius:10px;padding:11px 16px;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+
+/* chime alert on the wall */
+.alert{position:absolute;left:50%;top:calc(var(--dtop,81px) + 18px);transform:translateX(-50%);z-index:30;width:min(560px,90%);background:var(--panel);border:2px solid var(--accent);border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.3);padding:18px 20px;display:flex;flex-direction:column;gap:12px}
+.alert .ah{display:flex;align-items:center;gap:12px}
+.alert .bell{font-size:30px}
+.alert .ah b{font-size:21px;display:block}
+.alert .ah span{color:var(--fg2);font-size:14.5px}
+.alert .ai{display:flex;align-items:center;gap:10px;font-size:18px;font-weight:600;padding:10px 12px;border-radius:10px;background:color-mix(in srgb,var(--c) 15%,var(--panel));border-left:5px solid var(--c)}
+.alert .ai small{font-weight:500;color:var(--fg2);font-size:14px;margin-left:auto}
+.alert .btn{align-self:flex-end;min-width:120px}
+@media (prefers-reduced-motion:no-preference){.alert .bell{animation:ring .9s ease-in-out 2}}
+@keyframes ring{0%,100%{transform:rotate(0)}20%{transform:rotate(18deg)}40%{transform:rotate(-14deg)}60%{transform:rotate(9deg)}80%{transform:rotate(-5deg)}}
+.chimedemo{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.chimedemo button{border:1px solid var(--line2);background:var(--panel);border-radius:8px;padding:6px 10px;font-weight:600;font-size:13px;min-height:36px}
+
+/* computer editing view */
+.desk-wrap{overflow-x:auto;border-radius:12px}
+.desk{min-width:1120px;background:var(--base);border:1px solid var(--line);border-radius:12px;overflow:hidden;display:grid;grid-template-columns:310px 1fr;grid-template-rows:auto minmax(0,1fr);height:860px}
+.dtop{grid-column:1/-1;display:flex;align-items:center;gap:14px;padding:10px 18px;background:var(--panel);border-bottom:1px solid var(--line)}
+.dtop .brand{font-weight:700;font-size:16px}
+.dtop .divider{width:1px;height:22px;background:var(--line2)}
+.dtop h2{margin:0;font-size:17px;font-weight:600}
+.dtop .seg button,.dtop .navbtns button{min-height:36px;font-size:13.5px;padding:0 12px}
+.dtop .navbtns button{min-width:36px}
+.dtop .ci-btn{min-height:38px;font-size:14px;padding:0 14px}
+.dtop .ci-btn .count{min-width:22px;height:22px;font-size:12px}
+.dtop .right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.dtop .gear{width:38px;height:38px;border-radius:9px;border:1px solid var(--line2);background:var(--panel)}
+.dtop .me{display:flex;align-items:center;gap:7px;font-weight:600;font-size:13.5px;color:var(--fg2)}
+.side{background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+.side .shead{padding:12px 14px 8px;display:flex;flex-direction:column;gap:8px;border-bottom:1px solid var(--line)}
+.side .shead .r{display:flex;align-items:center;justify-content:space-between}
+.side .shead h3{margin:0;font-size:14px}
+.side .shead input{min-height:36px;border:1px solid var(--line2);border-radius:8px;padding:0 10px;font:inherit;background:var(--elev);color:var(--fg)}
+.side .sbody{flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:8px;min-height:0}
+.side .folder{border-radius:9px}
+.mini{border:1px solid var(--line2);background:var(--panel);border-radius:7px;font-size:12.5px;font-weight:600;padding:5px 9px}
+.dmain{overflow:auto;min-height:0;display:flex;flex-direction:column}
+.dmain .wfoot{margin-top:auto}
+.compact .lanehead div{font-size:14px;padding:8px 0}
+.compact .adchip{font-size:13px;padding:5px 8px}
+.compact .ev .et{font-size:13.5px}
+.compact .ev .tm,.compact .ev .sub{font-size:11.5px}
+.compact .ev.everyone .et{font-size:14.5px}
+.compact .chip{font-size:12.5px}
+.compact .mc{min-height:104px}
+
+/* schedule sheet */
+.sch-sheet{padding:24px;display:flex;flex-direction:column;gap:14px}
+.sch-sheet h2{margin:0;font-size:21px;padding-right:50px}
+.sch-sheet label{font-weight:600;font-size:14px}
+.sch-sheet .inrow{display:flex;gap:8px;flex-wrap:wrap}
+.sch-sheet input,.sch-sheet select{min-height:46px;border:1px solid var(--line2);border-radius:10px;padding:0 10px;font:inherit;background:var(--panel);color:var(--fg);flex:1 1 130px;min-width:0}
+.whochips{display:flex;gap:8px;flex-wrap:wrap}
+.whochips button{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line2);background:var(--panel);border-radius:999px;padding:0 14px;min-height:44px;font-weight:600}
+.whochips button[aria-pressed="true"]{background:color-mix(in srgb,var(--c) 18%,var(--panel));border-color:var(--c)}
+
+@media (max-width:640px){
+  .phone{width:100%;height:720px;border-width:6px;border-radius:28px}
+  .stages button{padding:9px 12px}
+}
+@media (prefers-reduced-motion:no-preference){.ev,.chip,.acts button{transition:filter .15s}}
+</style>
+
+<div class="shell">
+  <div class="shell-head">
+    <div>
+      <h1>Family Calendar mockup</h1>
+      <p>The family, events and times are made-up examples, frozen at Friday 16 Oct, 3:42 pm. Everything you can tap works: views, event details, task folders and the full check-in flow.</p>
+    </div>
+    <div class="stages" role="group" aria-label="Mockup screen">
+      <button id="st-wall" aria-pressed="true">Wall display (touch)</button>
+      <button id="st-phone" aria-pressed="false">Phone</button>
+      <button id="st-desk" aria-pressed="false">Computer (editing)</button>
+    </div>
+  </div>
+  <div class="notes">
+    <span><i class="key"></i>Fixed event</span>
+    <span><i class="key flex"></i>Flexible job (dashed)</span>
+    <span><i class="key kev"></i>Everyone</span>
+    <span><i class="key g"></i>From Google (read-only)</span>
+    <span><b class="bdg">↻</b>Repeats weekly</span>
+    <span><i class="dot-amber"></i>Needs check-in</span>
+    <span>Faded = time has passed</span>
+  </div>
+  <section id="wall-stage"><div class="wall-wrap"><div class="wall" id="wall"></div></div></section>
+  <section id="phone-stage" hidden><div class="phones" id="phones"></div></section>
+  <section id="desk-stage" hidden><div class="desk-wrap"><div class="desk" id="desk"></div></div></section>
+</div>
+<div id="ovl-root"></div>
+<div id="gtoast-root"></div>
+
+<script>
+const M=[{id:'mum',n:'Mum'},{id:'dad',n:'Dad'},{id:'sam',n:'Sam'},{id:'ella',n:'Ella'}];
+const C=id=>id==='all'?'var(--accent)':`var(--${id})`;
+const MN=id=>M.find(m=>m.id===id).n;
+const NOW=15*60+42, H0=6, H1=21;
+const toMin=s=>{const[h,m]=s.split(':').map(Number);return h*60+m};
+const fmt=s=>{let[h,m]=s.split(':').map(Number);const ap=h>=12?'pm':'am';h=h%12||12;return `${h}:${String(m).padStart(2,'0')} ${ap}`};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ---------- example data ---------- */
+const today=[
+  {id:'bin',t:'Bin night – yellow lid',all:1,ev:1,kind:'fixed',rec:'Every second Friday',notes:'Recycling week. Bins out after dinner.'},
+  {id:'mufti',t:'Mufti day',all:1,m:['ella'],kind:'fixed',notes:'Gold coin donation.'},
+  {id:'dish',t:'Unload dishwasher',m:['ella'],s:'07:15',e:'07:45',kind:'flex',rec:'Mon–Fri',st:'check',qid:'dish'},
+  {id:'dwork',t:'Work',m:['dad'],s:'07:00',e:'15:30',kind:'fixed',g:'Dad – work'},
+  {id:'school',t:'School',m:['sam','ella'],s:'08:45',e:'15:15',kind:'fixed',rec:'Mon–Fri, term 4'},
+  {id:'mwork',t:'Work',m:['mum'],s:'09:00',e:'12:30',kind:'fixed',g:'Mum – work'},
+  {id:'parcel',t:'Post parcel to Nan',m:['mum'],s:'12:30',e:'13:15',kind:'flex',st:'done',task:'House'},
+  {id:'dent',t:'Dentist',m:['mum'],s:'13:30',e:'14:30',kind:'fixed',loc:'Smile Dental, Main St'},
+  {id:'swim',t:'Swimming',m:['sam'],s:'16:00',e:'17:00',kind:'fixed',rec:'Tue & Fri',loc:'Aquatic centre'},
+  {id:'gut',t:'Clean gutters',m:['dad'],s:'16:00',e:'17:30',kind:'flex',task:'House',notes:'Ladder is in the shed.'},
+  {id:'net',t:'Netball training',m:['ella'],s:'16:30',e:'17:30',kind:'fixed',rec:'Wed & Fri',loc:'Netball courts'},
+  {id:'tidy',t:'Tidy bedroom',m:['sam'],s:'17:15',e:'17:45',kind:'flex',task:'Kids'},
+  {id:'pizza',t:'Pizza & movie night',ev:1,s:'18:30',e:'20:30',kind:'fixed',rec:'Fridays'},
+];
+
+const DAYS=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'], TODAY_IDX=4;
+// week rows: everyone + members; each item [dayIdx, time|null, title, opts]
+const W={everyone:[],mum:[],dad:[],sam:[],ella:[]};
+const add=(r,d,s,t,o={})=>W[r].push({d,s,t,kind:'fixed',...o});
+add('everyone',4,null,'Bin night',{rec:1});add('everyone',4,'18:30','Pizza & movie night',{rec:1});
+add('everyone',5,'12:00',"Nan's birthday lunch");add('everyone',6,'16:00','Meal prep',{kind:'flex'});
+[0,2,4].forEach(d=>add('mum',d,'09:00','Work',{g:1}));add('mum',1,'19:30','Book club');add('mum',3,'10:00','Grocery shop',{kind:'flex',st:'done'});add('mum',4,'13:30','Dentist');
+[0,1,2,3,4].forEach(d=>add('dad',d,'07:00','Work',{g:1}));add('dad',2,'17:00','Mow front lawn',{kind:'flex',st:'check',qid:'mow'});add('dad',3,'18:00','Replace shower head',{kind:'flex',st:'check',qid:'show'});add('dad',4,'16:00','Clean gutters',{kind:'flex'});add('dad',5,'08:00','Footy coaching');
+[0,1,2,3,4].forEach(d=>add('sam',d,'08:45','School',{rec:1}));[1,4].forEach(d=>add('sam',d,'16:00','Swimming',{rec:1}));add('sam',3,'16:00','Pack camp bag',{kind:'flex',st:'check',qid:'camp'});add('sam',4,'17:15','Tidy bedroom',{kind:'flex'});add('sam',5,'08:30','Soccer game');
+[0,1,2,3,4].forEach(d=>add('ella',d,'07:15','Unload dishwasher',{kind:'flex',rec:1,st:d<4?'done':'check',qid:d===4?'dish':null}));[0,1,2,3,4].forEach(d=>add('ella',d,'08:45','School',{rec:1}));[2,4].forEach(d=>add('ella',d,'16:30','Netball',{rec:1}));add('ella',6,'14:00',"Mia's birthday party");
+Object.values(W).forEach(a=>a.sort((x,y)=>x.d-y.d||(x.s||'').localeCompare(y.s||'')));
+
+const folders=[
+  {n:'House',open:true,tasks:[
+    {id:'gut',t:'Clean gutters',kind:'flex',st:'scheduled',when:'Fri 16 Oct · 4:00 pm',who:'dad'},
+    {id:'show',t:'Replace shower head',kind:'flex',st:'check',when:'Thu 15 Oct · 6:00 pm',who:'dad'},
+    {id:'fly',t:'Fix fly screen – back door',kind:'flex',st:'open',rc:2},
+    {id:'carpet',t:'Book carpet cleaner',kind:'fixed',st:'open'},
+    {id:'parcel',t:'Post parcel to Nan',kind:'flex',st:'done',who:'mum'}]},
+  {n:'Garden',open:true,tasks:[
+    {id:'mow',t:'Mow front lawn',kind:'flex',st:'check',when:'Wed 14 Oct · 5:00 pm',who:'dad'},
+    {id:'mulch',t:'Spread mulch on back beds',kind:'flex',st:'underway',who:'dad'},
+    {id:'roses',t:'Prune roses',kind:'flex',st:'open'}]},
+  {n:'Kids',open:true,tasks:[
+    {id:'camp',t:'Pack camp bag',kind:'flex',st:'check',when:'Thu 15 Oct · 4:00 pm',who:'sam'},
+    {id:'tidy',t:'Tidy bedroom',kind:'flex',st:'scheduled',when:'Fri 16 Oct · 5:15 pm',who:'sam'},
+    {id:'books',t:'Cover school books',kind:'flex',st:'open',who:'ella'}]},
+  {n:'Car',open:false,tasks:[
+    {id:'rego',t:'Rego renewal (due 3 Nov)',kind:'fixed',st:'open'},
+    {id:'wash',t:'Wash the ute',kind:'flex',st:'open',rc:1}]},
+  {n:'Shopping',open:false,tasks:[
+    {id:'s1',t:'New school shoes – Sam',kind:'flex',st:'open'},
+    {id:'s2',t:'Birthday present for Mia',kind:'flex',st:'open'},
+    {id:'s3',t:'Pool chlorine',kind:'flex',st:'open'}]},
+];
+const findTask=id=>{for(const f of folders)for(const t of f.tasks)if(t.id===id)return t};
+
+// check-in queue: past flexible items with no answer yet
+let queue=[
+  {id:'mow',who:'dad',t:'Mow front lawn',planned:'Wed 14 Oct · 5:00 pm',from:'Garden tasks',task:'mow'},
+  {id:'show',who:'dad',t:'Replace shower head',planned:'Thu 15 Oct · 6:00 pm',from:'House tasks',task:'show',notes:'New head is in the laundry cupboard.'},
+  {id:'camp',who:'sam',t:'Pack camp bag',planned:'Thu 15 Oct · 4:00 pm',from:'Kids tasks',task:'camp',notes:'Camp is Wed 21 – Fri 23. Checklist on the fridge.'},
+  {id:'dish',who:'ella',t:'Unload dishwasher',planned:'Today · 7:15 am',from:'Repeats Mon–Fri',rec:true},
+];
+
+/* ---------- shared bits ---------- */
+const recB=e=>e.rec?'<b class="bdg" title="Repeats">↻</b>':'';
+const gB=e=>e.g?'<b class="bdg g" title="From Google">G</b>':'';
+function stLabel(e){
+  if(e.st==='check')return '<span class="st check"><i class="dot-amber"></i>Needs check-in</span>';
+  if(e.st==='done')return '<span class="st done">✓ Done</span>';
+  if(e.st==='underway')return '<span class="st underway">🔧 Underway</span>';
+  if(e.st==='resched')return '<span class="st check">Back in task list</span>';
+  return '';
+}
+const isPast=e=>e.e&&toMin(e.e)<=NOW;
+function syncState(qid,st){
+  today.forEach(e=>{if(e.qid===qid)e.st=st});
+  Object.values(W).forEach(a=>a.forEach(c=>{if(c.qid===qid)c.st=st}));
+}
+
+/* ---------- wall ---------- */
+let wallView='day';
+function nextUp(){
+  const up=today.filter(e=>e.s&&toMin(e.s)>NOW).sort((a,b)=>toMin(a.s)-toMin(b.s));
+  if(!up.length)return '';
+  const s=up[0].s, grp=up.filter(e=>e.s===s);
+  return `Next: ${grp.map(e=>`<b>${esc(e.t)}</b> (${e.ev?'Everyone':e.m.map(MN).join(' & ')})`).join(', ')} · in ${toMin(s)-NOW} min`;
+}
+let wallTasks=false, dragging=false;
+function renderWall(){
+  const n=queue.length;
+  const dsc=document.querySelector('#wall .dbody')?.scrollTop||0;
+  const title={day:'Friday 16 October',week:'Week of 12 – 18 October',month:'October 2026'}[wallView];
+  document.getElementById('wall').innerHTML=`
+    <div class="wtop">
+      <div class="brand">Family Calendar</div>
+      <div class="when"><div class="wdate">${title}</div><div class="next">${nextUp()}</div></div>
+      <div class="clock">3:42<span style="font-size:18px"> pm</span></div>
+      <div class="seg" role="group" aria-label="View">${['day','week','month'].map(v=>`<button data-view="${v}" aria-pressed="${v===wallView}">${v[0].toUpperCase()+v.slice(1)}</button>`).join('')}</div>
+      <div class="navbtns"><button aria-label="Previous">‹</button><button>Today</button><button aria-label="Next">›</button></div>
+      <button class="tasks-btn" id="wall-tasks" aria-expanded="${wallTasks}">☑ Tasks</button>
+      <button class="ci-btn" id="wall-ci" data-zero="${n===0}">Check-in <span class="count">${n}</span></button>
+    </div>
+    ${wallView==='day'?dayHTML(46):wallView==='week'?weekHTML():monthHTML()}
+    ${wallTasks?`<aside class="drawer big ${dragging?'dragging':''}" aria-label="Tasks">
+      <div class="dhead"><h3>Tasks</h3><button id="drawer-x" aria-label="Close tasks">✕</button></div>
+      <div class="dbody">${tasksHTML()}</div>
+      <div class="dfoot">Hold a task, then drag it onto someone's lane. Closes after 1 minute without a touch.</div></aside>`:''}
+    ${alertHTML()}
+    <div class="wfoot">
+      <div class="legend">${M.map(m=>`<span><i class="sw" style="--c:${C(m.id)}"></i>${m.n}</span>`).join('')}<span><i class="sw" style="--c:var(--accent)"></i>Everyone</span></div>
+      <span class="chimedemo">🔔 Try it: <button data-chime="start">4:00 pm start</button><button data-chime="remind">10 min before netball</button> · Each person's chime: ${[...M.map(m=>m.id),'all'].map(k=>`<button data-pchime="${k}" title="${CHIMES[k].n}"><i class="sw" style="--c:${C(k)};display:inline-block;width:9px;height:9px;margin-right:5px"></i>${k==='all'?'Everyone':MN(k)} ▶</button>`).join('')}</span>
+      <span class="tip">Tap an event for details · swipe to change ${wallView} · returns to Today after 2 min idle</span>
+    </div>`;
+  const db=document.querySelector('#wall .dbody');if(db)db.scrollTop=dsc;
+  document.getElementById('wall').style.setProperty('--dtop',document.querySelector('#wall .wtop').offsetHeight+'px');
+}
+function dayHTML(hh){
+  const N=M.length, idx=id=>M.findIndex(m=>m.id===id);
+  const allday=today.filter(e=>e.all).map(e=>{
+    const col=e.ev?'1 / -1':`${idx(e.m[0])+1} / span ${e.m.length}`;
+    return `<button class="adchip" data-ev="${e.id}" style="grid-column:${col};--c:${e.ev?'var(--accent)':C(e.m[0])}">${esc(e.t)} ${recB(e)}${e.ev?'<span class="sub" style="font-weight:500;color:var(--fg2)">· Everyone</span>':''}</button>`}).join('');
+  const blocks=[];
+  today.filter(e=>!e.all).forEach(e=>{
+    const top=(toMin(e.s)-H0*60)/60*hh, h=(toMin(e.e)-toMin(e.s))/60*hh-3;
+    const cls=['ev',e.kind==='flex'?'flex':'',e.ev?'everyone':'',e.g?'g':'',e.st==='resched'?'resched':'',(isPast(e)&&e.kind==='fixed')?'past':''].join(' ');
+    let groups;
+    if(e.ev)groups=[[0,N]];
+    else{const ix=e.m.map(idx).sort((a,b)=>a-b);const contig=ix.every((v,i)=>i===0||v===ix[i-1]+1);groups=contig?[[ix[0],ix.length]]:ix.map(i=>[i,1])}
+    const c=e.ev?'var(--accent)':C(e.m[0]);
+    const done=isPast(e)&&e.kind==='fixed'?'<span class="st done">✓</span>':'';
+    const inner=e.ev
+      ?`<span class="et">${esc(e.t)} ${recB(e)}</span><span class="tm">${fmt(e.s)} – ${fmt(e.e)}</span><span class="sub">Everyone</span>`
+      :`<span class="et">${esc(e.t)} ${recB(e)}${gB(e)}${done}</span>${h>40?`<span class="tm">${fmt(e.s)} – ${fmt(e.e)}</span>`:''}${h>58&&e.m.length>1?`<span class="sub">${e.m.map(MN).join(' & ')}</span>`:''}${stLabel(e)}`;
+    groups.forEach(([i,span])=>blocks.push(`<button class="${cls}" data-ev="${e.id}" style="--c:${c};top:${top}px;height:${h}px;left:calc(${i/N*100}% + 4px);width:calc(${span/N*100}% - 8px)">${inner}</button>`));
+  });
+  const nowTop=(NOW-H0*60)/60*hh;
+  return `<div class="day" style="--hh:${hh}px">
+    <div class="gut-head"></div>
+    <div class="lanehead" style="grid-template-columns:repeat(${N},1fr)">${M.map(m=>`<div><i class="sw" style="--c:${C(m.id)}"></i>${m.n}</div>`).join('')}</div>
+    <div class="allday-lab">All day</div>
+    <div class="allday" style="grid-template-columns:repeat(${N},1fr)">${allday}</div>
+    <div class="gutter">${Array.from({length:H1-H0},(_,i)=>i?`<span style="top:${i*hh}px">${fmt(`${H0+i}:00`).replace(':00','')}</span>`:'').join('')}<span class="nowlab" style="top:${nowTop}px">3:42</span></div>
+    <div class="lanes" data-hh="${hh}">${M.map((m,i)=>i?`<div class="lanecol" style="left:${i/N*100}%"></div>`:'').join('')}${blocks.join('')}<div class="nowline" style="top:${nowTop}px"></div></div>
+  </div>`;
+}
+function chipHTML(c,row){
+  const past=c.d<TODAY_IDX||(c.d===TODAY_IDX&&c.s&&toMin(c.s)+60<=NOW);
+  const cls=['chip',row==='everyone'?'everyone':'',c.kind==='flex'?'flex':'',c.g?'g':'',c.st==='resched'?'resched':'',past&&c.kind==='fixed'?'past':''].join(' ');
+  const mk=c.st==='check'?'<span class="mk"><i class="dot-amber"></i></span>':c.st==='done'?'<span class="mk" style="color:var(--ok)">✓</span>':c.st==='underway'?'<span class="mk">🔧</span>':past&&c.kind==='fixed'?'<span class="mk" style="color:var(--ok)">✓</span>':'';
+  return `<button class="${cls}" style="--c:${row==='everyone'?'var(--accent)':C(row)}">${mk}<span class="tm">${c.s?fmt(c.s):'All day'}${c.g?' · G':''}${c.rec?' · ↻':''}</span>${esc(c.t)}</button>`;
+}
+function weekHTML(){
+  const rows=['everyone',...M.map(m=>m.id)];
+  let h=`<div class="week"><div class="wh"></div>${DAYS.map((d,i)=>`<div class="wh ${i===TODAY_IDX?'today':''}">${d}<small>${12+i} Oct</small></div>`).join('')}`;
+  rows.forEach(r=>{
+    h+=`<div class="rl"><i class="sw" style="--c:${C(r==='everyone'?'all':r)}"></i>${r==='everyone'?'Everyone':MN(r)}</div>`;
+    DAYS.forEach((_,d)=>{h+=`<div class="cell ${d===TODAY_IDX?'today':''}">${W[r].filter(c=>c.d===d).map(c=>chipHTML(c,r)).join('')}</div>`});
+  });
+  return h+'</div>';
+}
+function monthHTML(){
+  // grid: Mon 28 Sep → Sun 1 Nov 2026
+  const start=new Date(2026,8,28), cells=[];
+  const ev={ '2026-10-05':[['Labour Day','all']], '2026-10-12':[['Term 4 starts','sam']], '2026-10-14':[['5:00 Mow front lawn','dad','flex']],
+    '2026-10-16':[['1:30 Dentist','mum'],['6:30 Pizza night','all']], '2026-10-17':[["12:00 Nan's birthday lunch",'all'],['8:30 Soccer','sam']],
+    '2026-10-18':[["2:00 Mia's party",'ella']], '2026-10-24':[['8:30 Soccer finals','sam']], '2026-10-27':[["Ella's birthday 🎂",'all']],
+    '2026-10-28':[['4:00 Parent–teacher','mum']], '2026-10-03':[['Fix fly screen','dad','flex']], '2026-10-08':[['Vet – Biscuit','mum']], '2026-10-30':[['7:00 Dinner with the Kellys','all'],['4:30 Netball final','ella']]};
+  const bars=[['School holidays','2026-09-28','2026-10-11','ella'],['School camp – Sam','2026-10-21','2026-10-23','sam'],['Weekend at the coast','2026-10-31','2026-11-01','all']];
+  const key=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  let h=`<div class="month">${DAYS.map(d=>`<div class="mh">${d}</div>`).join('')}`;
+  for(let i=0;i<35;i++){
+    const d=new Date(start);d.setDate(start.getDate()+i);const k=key(d), dow=i%7;
+    const other=d.getMonth()!==9, isToday=k==='2026-10-16';
+    let items='';
+    bars.forEach(([t,a,b,who])=>{if(k>=a&&k<=b){const pos=k===a?'start':k===b?'end':'mid';items+=`<button class="mchip bar ${pos} ${dow===0?'wkstart':''}" style="--c:${C(who)}"><span class="lbl">${esc(t)}</span></button>`}});
+    const list=ev[k]||[];
+    list.slice(0,3).forEach(([t,who,f])=>{items+=`<button class="mchip ${f||''}" style="--c:${C(who)}">${esc(t)}</button>`});
+    if(list.length>3)items+=`<div class="more">+${list.length-3} more</div>`;
+    const term=k>='2026-10-12'&&!other;
+    const dots=term?[...(dow===1||dow===4?['sam']:[]),...(dow===2||dow===4?['ella']:[])]:[];
+    h+=`<div class="mc ${other?'other':''} ${isToday?'today':''}"><div class="dn"><b>${d.getDate()}</b></div>${items}${dots.length?`<div class="rdots" title="Weekly routine">${dots.map(m=>`<i style="--c:${C(m)}"></i>`).join('')}</div>`:''}</div>`;
+  }
+  return h+'</div>';
+}
+
+/* ---------- chimes (Web Audio, so no sound files are needed) ---------- */
+let wallAlert=null, actx=null;
+// one chime per member + a family chime for Everyone; [freq, start offset s, length s]
+const CHIMES={
+  mum:{n:'Bells',wave:'triangle',notes:[[1319,0,1.6],[1568,.22,1.6],[2093,.44,1.8]]},
+  dad:{n:'Ding-dong',wave:'sine',notes:[[659,0,1.4],[523,.45,1.8]]},
+  sam:{n:'Marimba',wave:'triangle',notes:[[523,0,.45],[659,.12,.45],[784,.24,.45],[1047,.36,.8]]},
+  ella:{n:'Chirp',wave:'sine',notes:[[1760,0,.35],[2217,.1,.35],[1760,.3,.35],[2217,.4,.6]]},
+  all:{n:'Family fanfare',wave:'triangle',notes:[[523,0,.5],[659,.18,.5],[784,.36,.5],[1047,.6,1.6],[784,.6,1.6],[659,.6,1.6]]},
+};
+const chimeLen=k=>Math.max(...CHIMES[k].notes.map(([,dt,l])=>dt+l*.5));
+function playChime(key,remind,at){
+  try{
+    actx=actx||new (window.AudioContext||window.webkitAudioContext)();
+    const c=CHIMES[key], t0=actx.currentTime+.05+(at||0);
+    const notes=remind?c.notes.slice(0,2):c.notes, peak=(remind?.14:.26)/(key==='all'?2:1);
+    notes.forEach(([f,dt,len])=>{const o=actx.createOscillator(),g=actx.createGain();o.type=c.wave;o.frequency.value=f;
+      g.gain.setValueAtTime(0,t0+dt);g.gain.linearRampToValueAtTime(peak,t0+dt+.015);g.gain.exponentialRampToValueAtTime(.0006,t0+dt+len);
+      o.connect(g).connect(actx.destination);o.start(t0+dt);o.stop(t0+dt+len+.05)});
+  }catch(e){}
+}
+// several people starting at once: each person's chime plays in turn
+function playSequence(keys,remind){let at=0;keys.forEach(k=>{playChime(k,remind,at);at+=chimeLen(k)+.35})}
+const chimeKeys=items=>[...new Set(items.flatMap(e=>e.ev?['all']:e.m))];
+function triggerChime(kind){
+  const items=kind==='start'?today.filter(e=>e.s==='16:00'):today.filter(e=>e.id==='net');
+  wallAlert={kind,items};playSequence(chimeKeys(items),kind!=='start');renderWall();
+  clearTimeout(triggerChime.t);triggerChime.t=setTimeout(()=>{wallAlert=null;renderWall()},60000);
+}
+function alertHTML(){
+  if(!wallAlert)return '';
+  const st=wallAlert.kind==='start';
+  return `<div class="alert" role="alert"><div class="ah"><span class="bell">🔔</span><div><b>${st?'4:00 pm · Starting now':'In 10 minutes · 4:30 pm'}</b><span>${st?'Time to start':'Time to get ready and leave'} · ♪ ${chimeKeys(wallAlert.items).map(k=>k==='all'?'Family fanfare':`${MN(k)}'s ${CHIMES[k].n.toLowerCase()}`).join(', then ')}</span></div></div>
+    ${wallAlert.items.map(e=>`<div class="ai" style="--c:${C(e.m[0])}">${esc(e.t)}<small>${e.m.map(MN).join(' & ')}${e.kind==='flex'?' · flexible job':''}${e.loc?` · ${esc(e.loc)}`:''}</small></div>`).join('')}
+    <button class="btn pri" id="alert-ok">OK</button></div>`;
+}
+
+/* ---------- event detail overlay ---------- */
+function openDetail(id,fromDesk){
+  const e=today.find(x=>x.id===id);if(!e)return;
+  const who=e.ev?`<span class="pill" style="--c:var(--accent)"><i class="sw" style="--c:var(--accent)"></i>Everyone</span>`:e.m.map(m=>`<span class="pill" style="--c:${C(m)}"><i class="sw" style="--c:${C(m)}"></i>${MN(m)}</span>`).join('');
+  const kind=e.kind==='flex'?`Flexible job${e.task?` · from ${e.task} tasks`:''}`:'Fixed event';
+  showOvl(`<div class="detail">
+    <h2>${esc(e.t)}</h2>
+    <div class="row">${who}</div>
+    <div class="row"><span class="mono" style="font-size:16px;color:var(--fg)">${e.all?'All day':`${fmt(e.s)} – ${fmt(e.e)}`}</span> · Friday 16 October</div>
+    <div class="row">${kind}${e.rec?` · ↻ Repeats ${esc(e.rec)}`:''}</div>
+    ${e.g?`<div class="row"><b class="bdg g">G</b> From Google calendar “${esc(e.g)}” (read-only)</div>`:''}
+    ${e.loc?`<div class="row">📍 ${esc(e.loc)}</div>`:''}
+    ${e.notes?`<div class="row" style="color:var(--fg)">${esc(e.notes)}</div>`:''}
+    ${stLabel(e)?`<div class="row">${stLabel(e)}</div>`:''}
+    ${fromDesk?(e.g?'':'<div class="row"><button class="btn pri">Edit</button><button class="btn">Delete</button></div>'):'<div class="row" style="font-size:13px;color:var(--mute)">Wall display is view-only. Edit from a phone or computer.</div>'}
+  </div>`);
+}
+function showOvl(inner,host){
+  const r=document.getElementById('ovl-root');
+  r.innerHTML=`<div class="ovl" id="ovl"><div class="sheet" role="dialog" aria-modal="true"><button class="x" aria-label="Close" data-close>✕</button><div id="ovl-body">${inner}</div></div></div>`;
+}
+function closeOvl(){document.getElementById('ovl-root').innerHTML='';hosts.wall=newHost()}
+
+/* ---------- check-in ---------- */
+const newHost=()=>({member:null,sub:null,toast:null,skipped:new Set()});
+const hosts={wall:newHost(),p0:newHost(),p1:newHost(),p2:newHost()};
+function ciHTML(hk){
+  const h=hosts[hk];
+  const toast=h.toast?`<div class="toast">${h.toast}</div>`:'';
+  if(!h.member){
+    return `<div class="ci"><h3>Who's checking in?</h3><p class="lede">Flexible jobs from earlier that nobody has answered yet.</p>
+      <div class="who">${M.map(m=>{const c=queue.filter(q=>q.who===m.id).length;return `<button data-ci-who="${m.id}" data-host="${hk}"><span class="av" style="--c:${C(m.id)}">${m.n[0]}</span><span class="nm">${m.n}</span><span class="ct ${c?'':'zero'}">${c?`${c} to check`:'All done ✓'}</span></button>`}).join('')}</div>${toast}</div>`;
+  }
+  const mine=queue.filter(q=>q.who===h.member), left=mine.filter(q=>!h.skipped.has(q.id)), item=left[0];
+  if(!item){
+    return `<div class="ci"><div class="caught"><div class="big">✓</div><h3>All caught up, ${MN(h.member)}</h3>
+      <p class="lede" style="margin:0">${mine.length?`${mine.length} saved for later.`:'Nothing left to check.'}</p>
+      <button class="btn pri" data-ci-back="${hk}">Done</button></div>${toast}</div>`;
+  }
+  let sub='';
+  if(h.sub==='under')sub=`<div class="sub-q"><label for="u-d-${hk}">Continue when? (optional)</label>
+      <div class="inrow"><input type="date" id="u-d-${hk}" value="2026-10-17"><input type="time" id="u-t-${hk}" value="09:00"></div>
+      <button class="btn pri" data-ci-act="under-time" data-host="${hk}">Put it on the calendar</button>
+      <button class="btn" data-ci-act="under-none" data-host="${hk}">No time yet, back to task list</button></div>`;
+  if(h.sub==='res')sub=item.rec
+    ?`<div class="sub-q"><label for="r-d-${hk}">Move just this one to…</label>
+      <div class="inrow"><input type="date" id="r-d-${hk}" value="2026-10-17"><input type="time" id="r-t-${hk}" value="09:00"></div>
+      <button class="btn pri" data-ci-act="res-time" data-host="${hk}">Move it</button>
+      <button class="btn" data-ci-act="res-skip" data-host="${hk}">Skip this week</button></div>`
+    :`<div class="sub-q"><label>It goes back into the ${esc(item.from)} list.</label>
+      <button class="btn pri" data-ci-act="res-none" data-host="${hk}">Send it back to the list</button>
+      <span style="color:var(--fg2);font-size:13px">or pick a new time now:</span>
+      <div class="inrow"><input type="date" id="r-d-${hk}" value="2026-10-18"><input type="time" id="r-t-${hk}" value="10:00"></div>
+      <button class="btn" data-ci-act="res-time" data-host="${hk}">Schedule for this time</button></div>`;
+  return `<div class="ci">
+    <div class="card" style="--c:${C(h.member)}"><span class="prog">${MN(h.member)} · ${left.length} left</span>
+      <span class="ttl">${esc(item.t)}</span><span class="meta">Planned ${esc(item.planned)}</span><span class="meta">${esc(item.from)}</span>${item.notes?`<span class="meta" style="color:var(--fg)">${esc(item.notes)}</span>`:''}</div>
+    ${sub||`<div class="acts">
+      <button class="a-done" data-ci-act="done" data-host="${hk}">✅ Done</button>
+      <button class="a-under" data-ci-act="under" data-host="${hk}">🔧 Underway</button>
+      <button class="a-res" data-ci-act="res" data-host="${hk}">📅 Needs rescheduling</button>
+      <button data-ci-act="later" data-host="${hk}">⏭ Ask me later</button></div>`}
+    ${toast}
+    <button class="linkbtn" data-ci-back="${hk}">‹ ${sub?'Back':'Someone else'}</button></div>`;
+}
+const fmtPick=(d,t)=>{const dt=new Date(`${d}T${t||'09:00'}`);return `${dt.toLocaleDateString('en-AU',{weekday:'short',day:'numeric',month:'short'}).replace(',','')} · ${fmt(t||'09:00')}`};
+function ciAct(hk,act){
+  const h=hosts[hk];
+  if(act==='under'||act==='res'){h.sub=act;return refresh()}
+  if(act==='later'){const it=queue.filter(q=>q.who===h.member&&!h.skipped.has(q.id))[0];h.skipped.add(it.id);h.toast='Saved for later';return done()}
+  const item=queue.filter(q=>q.who===h.member&&!h.skipped.has(q.id))[0], task=item.task&&findTask(item.task);
+  const pick=()=>fmtPick(document.getElementById(`${act.startsWith('u')?'u':'r'}-d-${hk}`).value,document.getElementById(`${act.startsWith('u')?'u':'r'}-t-${hk}`).value);
+  if(act==='done'){task&&(task.st='done');syncState(item.id,'done');h.toast='Marked done ✓'}
+  if(act==='under-time'){const w=pick();if(task){task.st='scheduled';task.when=w;task.u=true}syncState(item.id,'underway');h.toast=`Underway · next session ${w}`}
+  if(act==='under-none'){task&&(task.st='underway');syncState(item.id,'underway');h.toast='Underway · back in the task list'}
+  if(act==='res-none'){if(task){task.st='open';task.rc=(task.rc||0)+1}syncState(item.id,'resched');h.toast='Back in the task list'}
+  if(act==='res-time'){const w=pick();if(task){task.st='scheduled';task.when=w;task.rc=(task.rc||0)+1}syncState(item.id,'resched');h.toast=`Moved to ${w}`}
+  if(act==='res-skip'){syncState(item.id,'resched');h.toast='Skipped this week'}
+  queue=queue.filter(q=>q!==item);
+  done();
+  function done(){h.sub=null;refresh();setTimeout(()=>{h.toast=null;refresh()},1800)}
+}
+
+/* ---------- task folders (shared by phone, wall drawer, computer sidebar) ---------- */
+function tasksHTML(){
+  return folders.map((f,fi)=>{
+      const open=f.tasks.filter(t=>t.st!=='done').length;
+      return `<div class="folder"><button class="fhead" data-fold="${fi}"><span class="car">${f.open?'▾':'▸'}</span>${esc(f.n)}<span class="n">${open}</span></button>${f.open?
+        `<div class="addt">＋ Add task</div>`+[...f.tasks].sort((a,b)=>(a.st==='done')-(b.st==='done')).map(t=>{
+          const tags=[];
+          if(t.st==='check')tags.push('<span class="tag check">● Needs check-in</span>');
+          if(t.st==='underway'||t.u)tags.push('<span class="tag under">🔧 Underway</span>');
+          if(t.st==='scheduled')tags.push(`<span class="tag">📅 ${esc(t.when)}${t.who?` · ${MN(t.who)}`:''}</span>`);
+          if(t.rc)tags.push(`<span class="tag push">Pushed back ${t.rc}×</span>`);
+          tags.push(t.kind==='flex'?'<span class="tag flexk">Flexible</span>':'<span class="tag">Fixed</span>');
+          const canSch=t.st==='open'||t.st==='underway';
+          return `<div class="task ${t.st==='done'?'done':''}" ${canSch?`data-drag="${t.id}"`:''}><button class="tick" aria-label="Mark done" data-tick="${t.id}">${t.st==='done'?'✓':''}</button>
+            <div class="tb"><span class="tt">${esc(t.t)}</span>${t.st!=='done'?`<span class="tags">${tags.join('')}</span>`:''}</div>${canSch?`<button class="sch" data-sch="${t.id}">Schedule</button>`:''}</div>`}).join(''):''}</div>`}).join('');
+}
+
+/* ---------- phones ---------- */
+const phoneScreens=['cal','tasks','checkin'];
+const phoneFilter={p0:'all',p1:'all',p2:'all'};
+const phoneCaps=['Day view: tap a person to see just their lane, or All for one combined list. The + button adds an event.','Tasks: folders of to-dos. Long-press to drag one onto the calendar, or tap Schedule.','Check-in: tap your name, then answer for each flexible job. Try it. The badges and task list update.'];
+function phoneHTML(i){
+  const hk='p'+i, scr=phoneScreens[i], n=queue.length;
+  let head='', body='';
+  if(scr==='cal'){
+    const f=phoneFilter[hk];
+    head=`<div class="r1"><h2>Fri 16 Oct</h2><button aria-label="Previous day">‹</button><button aria-label="Next day">›</button></div>
+      <div class="pseg"><button aria-pressed="true">Day</button><button aria-pressed="false">Week</button><button aria-pressed="false">Month</button></div>
+      <div class="mchips">${[{id:'all',n:'All'},...M].map(m=>`<button data-pf="${m.id}" data-host="${hk}" aria-pressed="${f===m.id}" style="--c:${C(m.id)}">${m.id!=='all'?`<i class="sw" style="--c:${C(m.id)}"></i>`:''}${m.n}</button>`).join('')}</div>`;
+    const vis=today.filter(e=>f==='all'||e.ev||e.m.includes(f));
+    const allday=vis.filter(e=>e.all), timed=vis.filter(e=>!e.all).sort((a,b)=>toMin(a.s)-toMin(b.s));
+    const li=e=>{const ms=e.ev?['all']:e.m;return `<button class="li ${e.kind==='flex'?'flex':''} ${(isPast(e)&&e.kind==='fixed')?'past':''}" style="--c:${C(ms[0])}">
+      <span class="bars">${ms.map(m=>`<i class="bar" style="--c:${C(m)}"></i>`).join('')}</span><span class="t">${e.all?'All day':fmt(e.s)}</span>
+      <span class="b"><strong>${esc(e.t)}</strong><small>${e.ev?'Everyone':ms.map(MN).join(' & ')}${e.s?` · until ${fmt(e.e)}`:''} ${recB(e)}${gB(e)} ${stLabel(e)}</small></span></button>`};
+    body=(allday.length?`<div class="sec">All day</div>${allday.map(li).join('')}`:'')+`<div class="sec">Schedule</div>`+
+      timed.map(e=>(toMin(e.s)>NOW&&!timed.some(x=>x!==e&&toMin(x.s)>NOW&&toMin(x.s)<toMin(e.s))&&e===timed.find(x=>toMin(x.s)>NOW)?'<div class="nowrow">3:42 pm</div>':'')+li(e)).join('');
+    body+=`<button class="fab" aria-label="Add event">+</button>`;
+  } else if(scr==='tasks'){
+    head=`<div class="r1"><h2>Tasks</h2><button aria-label="Add folder">＋</button></div>`;
+    body=`<div class="hint">Long-press a task to drag it onto the calendar, or tap <b>Schedule</b> to pick a person, day and time.</div>`+tasksHTML();
+  } else {
+    head=`<div class="r1"><h2>Check-in</h2></div>`;
+    body=`<div style="margin:-12px -14px 0">${ciHTML(hk)}</div>`;
+  }
+  const nav=[['cal','📅','Calendar'],['tasks','☑','Tasks'],['checkin','✓','Check-in'],['more','⋯','More']];
+  return `<div class="pstat"><span>3:42</span><span>●●● 87%</span></div><div class="phead">${head}</div><div class="pbody">${body}</div>
+    <nav class="pnav">${nav.map(([k,ic,l])=>`<button data-pnav="${k}" data-host="${hk}" ${k===scr?'aria-current="page"':''}><span class="ic">${ic}</span>${l}${k==='checkin'&&n?`<span class="badge">${n}</span>`:''}</button>`).join('')}</nav>`;
+}
+function renderPhones(){
+  const root=document.getElementById('phones');
+  if(!root.children.length)root.innerHTML=[0,1,2].map(i=>`<div class="pcol"><div class="phone" id="phone${i}"></div><p id="pcap${i}"></p></div>`).join('');
+  [0,1,2].forEach(i=>{
+    const el=document.getElementById('phone'+i), sc=el.querySelector('.pbody')?.scrollTop||0;
+    el.innerHTML=phoneHTML(i);el.querySelector('.pbody').scrollTop=sc;
+    document.getElementById('pcap'+i).textContent=phoneCaps[phoneScreens.indexOf(phoneScreens[i])]&&{cal:phoneCaps[0],tasks:phoneCaps[1],checkin:phoneCaps[2]}[phoneScreens[i]]||'';
+  });
+}
+
+/* ---------- computer editing view ---------- */
+let deskView='day';
+function renderDesk(){
+  const n=queue.length, el=document.getElementById('desk');
+  const sc=el.querySelector('.sbody')?.scrollTop||0;
+  const title={day:'Friday 16 October 2026',week:'12 – 18 October 2026',month:'October 2026'}[deskView];
+  el.innerHTML=`
+    <div class="dtop">
+      <span class="brand">Family Calendar</span><span class="divider"></span>
+      <div class="seg" role="group" aria-label="View">${['day','week','month'].map(v=>`<button data-dview="${v}" aria-pressed="${v===deskView}">${v[0].toUpperCase()+v.slice(1)}</button>`).join('')}</div>
+      <div class="navbtns"><button aria-label="Previous">‹</button><button>Today</button><button aria-label="Next">›</button></div>
+      <h2>${title}</h2>
+      <div class="right">
+        <button class="ci-btn" id="desk-ci" data-zero="${n===0}">Check-in <span class="count">${n}</span></button>
+        <span class="me"><i class="sw" style="--c:var(--dad)"></i>Dad</span>
+        <button class="gear" aria-label="Settings">⚙</button>
+      </div>
+    </div>
+    <aside class="side">
+      <div class="shead"><div class="r"><h3>Tasks</h3><button class="mini">＋ Folder</button></div>
+        <input id="task-search" type="search" placeholder="Search tasks" aria-label="Search tasks">
+        <span style="font-size:12px;color:var(--mute)">Drag a task onto a lane, or click Schedule.</span></div>
+      <div class="sbody">${tasksHTML()}</div>
+    </aside>
+    <main class="dmain compact">
+      ${deskView==='day'?dayHTML(40):deskView==='week'?weekHTML():monthHTML()}
+      <div class="wfoot"><div class="legend">${M.map(m=>`<span><i class="sw" style="--c:${C(m.id)}"></i>${m.n}</span>`).join('')}<span><i class="sw" style="--c:var(--accent)"></i>Everyone</span></div>
+        <span class="tip">Click an empty slot to add · drag blocks to move · drag edges to resize</span></div>
+    </main>`;
+  el.querySelector('.sbody').scrollTop=sc;
+}
+
+/* ---------- schedule sheet ---------- */
+let sched=null;
+function openSchedule(id){
+  const t=findTask(id);sched={id,who:t.who||'dad'};
+  showOvl(`<div class="sch-sheet">
+    <h2>Schedule “${esc(t.t)}”</h2>
+    <label>Who</label>
+    <div class="whochips">${[...M,{id:'all',n:'Everyone'}].map(m=>`<button data-sw="${m.id}" aria-pressed="${m.id===sched.who}" style="--c:${C(m.id)}"><i class="sw" style="--c:${C(m.id)}"></i>${m.n}</button>`).join('')}</div>
+    <label for="sd">When</label>
+    <div class="inrow"><input type="date" id="sd" value="2026-10-16"><input type="time" id="stime" value="17:00" step="900">
+      <select id="slen" aria-label="How long"><option value="30">30 min</option><option value="60" selected>1 hour</option><option value="90">1½ hours</option><option value="120">2 hours</option><option value="240">Half day</option></select></div>
+    <span style="color:var(--fg2);font-size:13px">${t.kind==='flex'?'Flexible job: it will come up in check-in once the time has passed.':'Fixed event: it counts as done once the time has passed.'}</span>
+    <button class="btn pri" id="sgo">Put it on the calendar</button>
+  </div>`);
+}
+const hhmm=m=>`${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`;
+function folderOf(id){return folders.find(f=>f.tasks.some(t=>t.id===id)).n}
+function scheduleTask(id,who,date,start,len){
+  const t=findTask(id), sm=toMin(start), em=Math.min(sm+len,H1*60);
+  const label=fmtPick(date,start);
+  if(date==='2026-10-16'){
+    today.push({id:'n'+Date.now(),t:t.t,ev:who==='all'?1:0,m:who==='all'?[]:[who],s:start,e:hhmm(em),kind:t.kind,task:folderOf(id),qid:id});
+    const di=TODAY_IDX;W[who==='all'?'everyone':who].push({d:di,s:start,t:t.t,kind:t.kind,qid:id});
+    Object.values(W).forEach(a=>a.sort((x,y)=>x.d-y.d||(x.s||'').localeCompare(y.s||'')));
+  }
+  t.st='scheduled';t.when=label;t.who=who==='all'?null:who;
+  gToast(`Scheduled ${label} · ${who==='all'?'Everyone':MN(who)}`);
+  refresh();
+}
+function gToast(msg){const r=document.getElementById('gtoast-root');r.innerHTML=`<div class="gtoast">${esc(msg)}</div>`;clearTimeout(gToast.t);gToast.t=setTimeout(()=>r.innerHTML='',2400)}
+
+/* ---------- drag a task onto a lane (Pointer Events: mouse drags at once, touch needs a long-press) ---------- */
+let drag=null;
+function dropAt(x,y){
+  const el=document.elementFromPoint(x,y), lanes=el&&el.closest('.lanes');
+  if(!lanes)return null;
+  const r=lanes.getBoundingClientRect(), hh=+lanes.dataset.hh, N=M.length;
+  const li=Math.min(N-1,Math.max(0,Math.floor((x-r.left)/r.width*N)));
+  let mins=H0*60+Math.round(((y-r.top)/hh*60)/15)*15;
+  mins=Math.max(H0*60,Math.min(H1*60-60,mins));
+  return {lanes,li,mins,hh,N};
+}
+function startDrag(){
+  drag.active=true;clearTimeout(drag.timer);
+  const t=findTask(drag.id);
+  drag.ghost=Object.assign(document.createElement('div'),{className:'ghost',textContent:t.t});
+  document.body.appendChild(drag.ghost);moveGhost(drag.x,drag.y);
+  if(drag.inWall){dragging=true;if(wallView!=='day')wallView='day';renderWall()}
+  if(drag.inDesk&&deskView!=='day'){deskView='day';renderDesk()}
+}
+function moveGhost(x,y){
+  drag.ghost.style.left=x+'px';drag.ghost.style.top=y+'px';
+  document.querySelectorAll('.drop-prev').forEach(n=>n.remove());
+  const d=dropAt(x,y);drag.target=d;
+  if(d){const p=document.createElement('div');p.className='drop-prev';
+    Object.assign(p.style,{top:(d.mins-H0*60)/60*d.hh+'px',height:d.hh-3+'px',left:`calc(${d.li/d.N*100}% + 4px)`,width:`calc(${100/d.N}% - 8px)`});
+    p.textContent=`${fmt(hhmm(d.mins))} · ${M[d.li].n}`;d.lanes.appendChild(p)}
+}
+function endDrag(drop){
+  if(!drag)return;clearTimeout(drag.timer);
+  const d=drag.active&&drop?drag.target:null, id=drag.id;
+  drag.ghost?.remove();document.querySelectorAll('.drop-prev').forEach(n=>n.remove());
+  const wasWall=drag.inWall;drag=null;
+  if(wasWall){dragging=false}
+  if(d)scheduleTask(id,M[d.li].id,'2026-10-16',hhmm(d.mins),60);
+  else if(wasWall)renderWall();
+}
+document.addEventListener('pointerdown',e=>{
+  const row=e.target.closest('[data-drag]');
+  if(!row||e.target.closest('button')||e.button>0)return;
+  drag={id:row.dataset.drag,x:e.clientX,y:e.clientY,active:false,touch:e.pointerType!=='mouse',inWall:!!row.closest('#wall'),inDesk:!!row.closest('#desk')};
+  if(row.closest('.phone')){drag.inPhone=true}
+  if(drag.touch)drag.timer=setTimeout(()=>{if(drag&&!drag.inPhone)startDrag()},400);
+});
+document.addEventListener('pointermove',e=>{
+  if(!drag)return;
+  const moved=Math.hypot(e.clientX-drag.x,e.clientY-drag.y);
+  if(!drag.active){
+    if(drag.touch){if(moved>10){clearTimeout(drag.timer);drag=null}}
+    else if(moved>6&&!drag.inPhone){drag.x=e.clientX;drag.y=e.clientY;startDrag()}
+    return;
+  }
+  e.preventDefault();moveGhost(e.clientX,e.clientY);
+});
+document.addEventListener('touchmove',e=>{if(drag&&drag.active)e.preventDefault()},{passive:false});
+document.addEventListener('pointerup',()=>endDrag(true));
+document.addEventListener('pointercancel',()=>endDrag(false));
+
+/* ---------- wiring ---------- */
+function refresh(){
+  renderWall();renderPhones();renderDesk();
+  const ob=document.getElementById('ovl-body');
+  if(ob&&ob.dataset.ci)ob.innerHTML=ciHTML('wall');
+}
+document.addEventListener('click',ev=>{
+  const t=ev.target.closest('button,[data-close],.ovl');if(!t)return;
+  if(t.id==='ovl'&&ev.target===t||t.dataset.close!==undefined)return closeOvl();
+  if(['st-wall','st-phone','st-desk'].includes(t.id)){
+    ['wall','phone','desk'].forEach(k=>{const on=t.id==='st-'+k;document.getElementById(k+'-stage').hidden=!on;document.getElementById('st-'+k).setAttribute('aria-pressed',on)});return;
+  }
+  if(t.dataset.chime)return triggerChime(t.dataset.chime);
+  if(t.dataset.pchime)return playChime(t.dataset.pchime);
+  if(t.id==='alert-ok'){wallAlert=null;return renderWall()}
+  if(t.id==='wall-tasks'){wallTasks=!wallTasks;return renderWall()}
+  if(t.id==='drawer-x'){wallTasks=false;return renderWall()}
+  if(t.dataset.dview){deskView=t.dataset.dview;return renderDesk()}
+  if(t.id==='desk-ci'){hosts.wall=newHost();showOvl(ciHTML('wall'));document.getElementById('ovl-body').dataset.ci='1';return}
+  if(t.dataset.sch)return openSchedule(t.dataset.sch);
+  if(t.dataset.sw){sched.who=t.dataset.sw;document.querySelectorAll('[data-sw]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.sw===sched.who));return}
+  if(t.id==='sgo'){const v=k=>document.getElementById(k).value;const id=sched.id,who=sched.who,a=[v('sd'),v('stime')||'17:00',+v('slen')];closeOvl();return scheduleTask(id,who,...a)}
+  if(t.dataset.view){wallView=t.dataset.view;return renderWall()}
+  if(t.dataset.ev)return openDetail(t.dataset.ev,!!t.closest('#desk'));
+  if(t.id==='wall-ci'){hosts.wall=newHost();showOvl(ciHTML('wall'));document.getElementById('ovl-body').dataset.ci='1';return}
+  if(t.dataset.ciWho){const h=hosts[t.dataset.host];h.member=t.dataset.ciWho;h.skipped=new Set();h.sub=null;return refresh()}
+  if(t.dataset.ciBack){const h=hosts[t.dataset.ciBack];if(h.sub)h.sub=null;else h.member=null;return refresh()}
+  if(t.dataset.ciAct)return ciAct(t.dataset.host,t.dataset.ciAct);
+  if(t.dataset.pnav&&t.dataset.pnav!=='more'){phoneScreens[+t.dataset.host.slice(1)]=t.dataset.pnav;return renderPhones()}
+  if(t.dataset.pf){phoneFilter[t.dataset.host]=t.dataset.pf;return renderPhones()}
+  if(t.dataset.fold){const f=folders[+t.dataset.fold];f.open=!f.open;return renderPhones()}
+  if(t.dataset.tick){const k=findTask(t.dataset.tick);k.st=k.st==='done'?'open':'done';if(k.st==='done'){queue=queue.filter(q=>q.task!==k.id);syncState(k.id,'done')}return refresh()}
+});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeOvl()});
+// wall task drawer closes itself after 60s without a touch on the wall
+let idle;document.addEventListener('pointerdown',e=>{if(!e.target.closest('#wall'))return;clearTimeout(idle);idle=setTimeout(()=>{if(wallTasks&&!drag){wallTasks=false;renderWall()}},60000)});
+refresh();
+</script>

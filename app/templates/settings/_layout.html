@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Settings · {{ family_name }}{% endblock %}
+{% block body %}
+<div class="app">
+  <header class="topbar"><span class="brand" style="display:block">{{ family_name }}</span><h1 style="color:var(--fg2);font-weight:500">Settings</h1><a class="btn small" href="/">‹ Calendar</a><form method="post" action="/settings/lock"><button class="btn small" title="Settings lock again after 5 minutes anyway">🔒 Lock</button></form></header>
+  <main class="settings">
+    <nav class="settings-tabs" aria-label="Settings sections">
+      {% for key, label in tabs %}<a href="/settings/{{ key }}" {% if key == tab %}aria-current="page"{% endif %}>{{ label }}</a>{% endfor %}
+    </nav>
+    {% if flash %}<div class="flash" role="status">{{ flash }}</div>{% endif %}
+    {% if error %}<div class="flash error" role="alert">{{ error }}</div>{% endif %}
+    {% block content %}{% endblock %}
+  </main>
+</div>
+{% block scripts %}{% endblock %}
+{% endblock %}
