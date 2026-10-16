@@ -305,7 +305,7 @@ def backup_page(request: Request, _: None = Depends(require_parent_page), db: Se
 @router.get("/backup/download")
 def backup_download(_: None = Depends(require_parent_page)):
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H%M%S")
-    return FileResponse(DATABASE_PATH, filename=f"family_scheduler_backup_{timestamp}.db",
+    return FileResponse(DATABASE_PATH, filename=f"devine_family_planner_backup_{timestamp}.db",
                         media_type="application/octet-stream")
 
 
@@ -327,7 +327,7 @@ async def backup_restore(backup_file: UploadFile, _: None = Depends(require_pare
         shutil.copyfileobj(backup_file.file, f)
     if not _is_valid_db(tmp):
         tmp.unlink(missing_ok=True)
-        return _back("backup", err="That file isn't a Family Scheduler backup. Nothing was changed.")
+        return _back("backup", err="That file isn't a Devine Family Planner backup. Nothing was changed.")
     # Keep a copy of what's about to be replaced, so a mistaken restore can be undone.
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H%M%S")
     shutil.copy2(DATABASE_PATH, BACKUPS_DIR / f"pre-restore-{timestamp}.db")

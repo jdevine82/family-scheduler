@@ -1,4 +1,4 @@
-# Installing Family Scheduler
+# Installing Devine Family Planner
 
 ## Prerequisites
 

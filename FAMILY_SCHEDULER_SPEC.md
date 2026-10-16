@@ -1,4 +1,4 @@
-# Family Scheduler — Build Spec
+# Devine Family Planner — Build Spec
 
 A self-hosted family wall calendar. It shows **day**, **week** and **month** views on a wall display, with one **swim lane per family member**, and you can plan months ahead. It handles **recurring weekly activities**, events for the whole family or for one person, **read-only Google Calendar feeds** for each member, and **to-do task folders** you can drag onto the calendar. Calendar items are either **fixed events**, which count as done once their time has passed, or **flexible jobs**, which a family member confirms through a **daily check-in**.
 
@@ -411,7 +411,7 @@ Reuse Job Scheduler's `STYLE_GUIDE.md` tokens (light Pico-style neutrals, Inter 
 - Flexible vs fixed: flexible items get a **dashed** border so plans read as "loose". Past fixed events fade to about 60% opacity. Check-in states use small icons (✓ done, 🔧 underway, amber dot needs check-in), never fill colour, keeping to Job Scheduler's "one colour channel" rule.
 - Check-in screens use very large touch targets (minimum 64px buttons).
 - Display mode type scale is about 1.4× the edit-mode scale.
-- No company branding. The top bar says "Family Calendar" (**[QUESTION]** do you want a family name or photo?).
+- **Name: "Devine Family Planner"** (decided). It's the default for the top bar and browser tab, and can be edited in Settings → Display & chimes. Code, repo, paths and the systemd service keep the technical name `family-scheduler`.
 - Same member palette as the worker palette (blue, violet, cyan, rose, lime, gold, indigo, magenta).
 
 ---
@@ -443,7 +443,7 @@ Each phase ends usable. After phase 5 you can already put it on the wall.
 6. **School holidays** calendar to pause term-time activities, now or later?
 7. **Google**: is read-only via secret iCal addresses OK for v1 (no two-way sync)?
 8. **Extras for the display** (later): weather, countdowns ("12 sleeps to holidays"), meal plan row, birthday reminders?
-9. **Name/branding** for the top bar.
+9. ~~Name/branding~~ **Decided:** Devine Family Planner.
 10. ~~Check-in identity~~ **Decided:** tap name, no PIN.
 11. ~~Check-in prompting~~ **Decided:** only when the button is pressed.
 12. ~~Underway with no new time~~ **Decided:** back into the task list.

@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from app.models import Setting
 
 DEFAULTS: dict[str, str] = {
-    "family_name": "Family Calendar",
+    "family_name": "Devine Family Planner",
     "display_start_hour": "6",
     "display_end_hour": "21",
     "week_starts_on": "0",  # 0 = Monday, 6 = Sunday

@@ -1,4 +1,4 @@
-# Family Scheduler
+# Devine Family Planner
 
 A self-hosted family wall calendar with a lane for each person. It has weekly routines, read-only Google calendars, to-do folders you drag onto the calendar, a daily check-in for flexible jobs, a chime for each person, and a pocket money tab for the kids.
 

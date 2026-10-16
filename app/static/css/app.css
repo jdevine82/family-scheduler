@@ -1,4 +1,4 @@
-/* Family Scheduler — tokens follow the Job Scheduler style guide (light, Pico-like),
+/* Devine Family Planner — tokens follow the Job Scheduler style guide (light, Pico-like),
    with a matching dark theme. Mobile-first: base rules are for phones, wider screens below. */
 :root {
   --page: #EDF1F4; --base: #FBFCFD; --panel: #FFFFFF; --elev: #F3F6F8; --hover: #E9EEF2;

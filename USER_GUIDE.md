@@ -1,4 +1,4 @@
-# Family Scheduler: user guide
+# Devine Family Planner: user guide
 
 ## The calendar
 

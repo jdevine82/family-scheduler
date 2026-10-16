@@ -1,5 +1,5 @@
 [Unit]
-Description=Family Scheduler
+Description=Devine Family Planner
 After=network.target
 
 [Service]

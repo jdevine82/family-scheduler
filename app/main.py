@@ -26,7 +26,7 @@ async def lifespan(_app: FastAPI):
         task.cancel()
 
 
-app = FastAPI(title="Family Scheduler", lifespan=lifespan)
+app = FastAPI(title="Devine Family Planner", lifespan=lifespan)
 
 # The session cookie only carries the short parent-PIN unlock.
 app.add_middleware(SessionMiddleware, secret_key=SESSION_SECRET, https_only=False, max_age=60 * 60 * 24 * 180)

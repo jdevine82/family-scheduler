@@ -41,7 +41,7 @@ def manifest(db: Session = Depends(get_db)):
     return JSONResponse(
         {
             "name": name,
-            "short_name": name[:12],
+            "short_name": "Family Planner",
             "start_url": "/",
             "display": "standalone",
             "background_color": "#FBFCFD",

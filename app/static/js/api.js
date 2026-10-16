@@ -9,7 +9,7 @@ export async function api(method, url, body) {
   try {
     res = await fetch(url, opts);
   } catch {
-    throw new Error("Can't reach the family calendar. Check the Wi-Fi.");
+    throw new Error("Can't reach the family planner. Check the Wi-Fi.");
   }
   let data = null;
   try { data = await res.json(); } catch { /* empty body */ }
