@@ -12,7 +12,7 @@ from app import feeds, money
 from app.config import DATABASE_PATH
 from app.database import engine, get_db
 from app.deps import lock_parent, require_parent_page, unlock_parent
-from app.models import CalendarFeed, Member, RecurringActivity
+from app.models import CalendarFeed, HiddenExternal, Member, RecurringActivity
 from app.services import ServiceError
 from app.settings_store import all_settings, set_setting
 from app.templating import templates
@@ -104,8 +104,12 @@ def members_page(request: Request, _: None = Depends(require_parent_page), db: S
     used = {m.chime_sound for m in members}
     next_chime = next((k for k, _ in CHIME_SOUNDS if k not in used), "bells")
     next_color = MEMBER_PALETTE[len(members) % len(MEMBER_PALETTE)]
+    # Older ones are outside the Google download window, so restoring them would show nothing.
+    since = datetime.datetime.combine(today_local() - datetime.timedelta(days=31), datetime.time())
+    hidden = (db.query(HiddenExternal).filter(HiddenExternal.start_at >= since)
+              .order_by(HiddenExternal.start_at).all())
     return templates.TemplateResponse(request, "settings/members.html", _ctx(request, db, "members", members=members, chime_sounds=CHIME_SOUNDS,
-        next_chime=next_chime, next_color=next_color))
+        next_chime=next_chime, next_color=next_color, hidden=hidden))
 
 
 @router.post("/members")
@@ -191,6 +195,18 @@ def feeds_refresh(_: None = Depends(require_parent_page), db: Session = Depends(
     if failed:
         return _back("members", err=f"Refreshed {len(result)} calendars; {failed} had a problem (see below).")
     return _back("members", f"Refreshed {len(result)} calendars.")
+
+
+@router.post("/hidden/{hid}/restore")
+def hidden_restore(hid: int, _: None = Depends(require_parent_page), db: Session = Depends(get_db)):
+    h = db.get(HiddenExternal, hid)
+    if h is None:
+        return _back("members")
+    title, copied = h.title or "That event", h.copied
+    db.delete(h)
+    db.commit()
+    note = " Your edited copy is still there too; delete it if you don't need it." if copied else ""
+    return _back("members", f"“{title}” is back on the calendar from Google.{note}")
 
 
 @router.post("/feeds/{feed_id}")

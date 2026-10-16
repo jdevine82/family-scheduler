@@ -211,6 +211,10 @@ class HiddenExternal(Base):
     feed_id: Mapped[int] = mapped_column(ForeignKey("calendar_feeds.id", ondelete="CASCADE"), index=True)
     uid: Mapped[str] = mapped_column(String(255))
     start_at: Mapped[datetime.datetime] = mapped_column(DateTime)
+    title: Mapped[str] = mapped_column(String(255), default="")  # for the Restore list in Settings
+    copied: Mapped[bool] = mapped_column(Boolean, default=False)  # edited into a planner item, not just removed
+
+    feed: Mapped[CalendarFeed] = relationship()
 
 
 class TaskFolder(Base):

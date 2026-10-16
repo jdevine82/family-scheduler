@@ -439,20 +439,23 @@ def delete_event(event_id: int, db: Session = Depends(get_db)):
 # Google is never changed. Editing a Google event copies it into an ordinary
 # item and hides the original here; deleting just hides it.
 
-def _hide_external(db: Session, xid: int) -> tuple[ExternalEvent, CalendarFeed]:
+def _hide_external(db: Session, xid: int, copied: bool) -> tuple[ExternalEvent, CalendarFeed]:
     row = (db.query(ExternalEvent, CalendarFeed).join(CalendarFeed, ExternalEvent.feed_id == CalendarFeed.id)
            .filter(ExternalEvent.id == xid).first())
     if row is None:
         bad("That Google calendar has just refreshed. Close this and try again.", 404)
     x, feed = row
-    if not db.query(HiddenExternal.id).filter_by(feed_id=feed.id, uid=x.uid, start_at=x.start_at).first():
-        db.add(HiddenExternal(feed_id=feed.id, uid=x.uid, start_at=x.start_at))
+    hidden = db.query(HiddenExternal).filter_by(feed_id=feed.id, uid=x.uid, start_at=x.start_at).first()
+    if hidden is None:
+        hidden = HiddenExternal(feed_id=feed.id, uid=x.uid, start_at=x.start_at)
+        db.add(hidden)
+    hidden.title, hidden.copied = x.title, copied
     return x, feed
 
 
 @router.patch("/external/{xid}")
 def edit_external(xid: int, body: ItemBody, db: Session = Depends(get_db)):
-    x, feed = _hide_external(db, xid)
+    x, feed = _hide_external(db, xid, copied=True)
     it = external_item(x, feed, False, now_local())
     ev = Event(title=it["title"], location=it["location"], notes="", date=parse_date(it["date"]),
                end_date=parse_date(it["end_date"]), start_time=parse_time(it["start"]), end_time=parse_time(it["end"]),
@@ -466,7 +469,7 @@ def edit_external(xid: int, body: ItemBody, db: Session = Depends(get_db)):
 
 @router.delete("/external/{xid}")
 def delete_external(xid: int, db: Session = Depends(get_db)):
-    _hide_external(db, xid)
+    _hide_external(db, xid, copied=False)
     db.commit()
     return {"ok": True}
 

@@ -74,6 +74,20 @@
   <h2>Google calendars</h2>
   <p>Calendars refresh by themselves every few minutes (see Display &amp; chimes). Refresh now if you've just changed something in Google.</p>
   <form method="post" action="/settings/feeds/refresh"><button class="btn">Refresh all calendars now</button></form>
+  <h3 style="margin-top:18px">Removed or edited Google events</h3>
+  {% if hidden %}
+  <p class="help">These Google events are hidden in the planner. Restore one to show it from Google again.</p>
+  {% for h in hidden %}
+  <div class="row" style="align-items:center;padding:6px 0;border-top:1px solid var(--line)">
+    <div style="flex:1 1 200px"><b>{{ h.title or "(no title)" }}</b><br>
+      <small class="muted">{{ h.start_at.strftime("%a %d/%m/%Y") }}{% if h.start_at.time().hour or h.start_at.time().minute %} · {{ h.start_at.strftime("%I:%M %p").lstrip("0").lower() }}{% endif %}
+        · {{ h.feed.label }} · {{ "Edited (a planner copy exists)" if h.copied else "Removed" }}</small></div>
+    <form method="post" action="/settings/hidden/{{ h.id }}/restore" style="flex:0 0 auto"><button class="btn small">Restore</button></form>
+  </div>
+  {% endfor %}
+  {% else %}
+  <p class="help">None. When you remove or edit a Google event in the planner, it's listed here so you can bring it back.</p>
+  {% endif %}
 </section>
 {% endblock %}
 {% block scripts %}

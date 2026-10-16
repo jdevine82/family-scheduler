@@ -83,6 +83,18 @@ def test_editing_google_event_makes_local_copy(client, db, family, monkeypatch):
         ("event", "2026-10-16", "12:00"), ("external", "2026-10-30", "11:00")]
     assert work[0]["from_google"] == "Dad" and work[0]["member_ids"] == [family["Dad"]]
 
+    # Settings lists both, and Restore brings the removed one back from Google.
+    from app import money
+    from app.models import HiddenExternal
+    money._failures.clear()
+    client.post("/settings/unlock", data={"pin": "4821", "pin2": "4821", "next": "/settings/members"})
+    page = client.get("/settings/members").text
+    assert "Removed" in page and "Edited (a planner copy exists)" in page
+    removed = db.query(HiddenExternal).filter_by(copied=False).one()
+    r = client.post(f"/settings/hidden/{removed.id}/restore", follow_redirects=False)
+    assert r.status_code == 303 and "back+on+the+calendar" in r.headers["location"]
+    assert [i["date"] for i in cal() if i["title"] == "Work"] == ["2026-10-16", "2026-10-23", "2026-10-30"]
+
 
 def test_redact_hides_secret():
     url = "https://calendar.google.com/calendar/ical/abc%40gmail.com/private-123456/basic.ics"
