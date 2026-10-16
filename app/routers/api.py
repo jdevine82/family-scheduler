@@ -23,7 +23,7 @@ from app.models import (
     Task,
     TaskFolder,
 )
-from app.occurrences import build_items, occurs_on
+from app.occurrences import build_items, occurrence_dates, occurs_on, recurring_item
 from app.services import (
     ServiceError,
     active_members,
@@ -281,6 +281,7 @@ def reorder_tasks(body: ReorderBody, db: Session = Depends(get_db)):
 class RepeatBody(BaseModel):
     weekdays: list[int] = Field(min_length=1)
     interval_weeks: int = Field(default=1, ge=1, le=8)
+    valid_from: str | None = None  # first week; defaults to the item's date
     valid_until: str | None = None
 
 
@@ -344,9 +345,13 @@ def create_item(body: ItemBody, db: Session = Depends(get_db)):
                   kind=body.kind or KIND_FIXED, chime=body.chime or "default",
                   remind_minutes=body.remind_minutes or None)
     if body.repeat:
+        first = parse_date(body.repeat.valid_from) or date
+        until = parse_date(body.repeat.valid_until)
+        if until and until < first:
+            bad("The 'until' date can't be before it starts.")
         act = RecurringActivity(weekdays=",".join(str(d) for d in sorted(set(body.repeat.weekdays))),
-                                interval_weeks=body.repeat.interval_weeks, anchor_date=date, valid_from=date,
-                                valid_until=parse_date(body.repeat.valid_until), **common)
+                                interval_weeks=body.repeat.interval_weeks, anchor_date=first, valid_from=first,
+                                valid_until=until, **common)
         act.members = members
         db.add(act)
         db.commit()
@@ -431,7 +436,8 @@ def _shift_weekdays(act: RecurringActivity, delta_days: int) -> None:
         act.weekdays = ",".join(str(d) for d in sorted({(d + delta_days) % 7 for d in act.weekday_list}))
 
 
-def _apply_series(db: Session, act: RecurringActivity, data: dict, original: datetime.date) -> None:
+def _apply_series(db: Session, act: RecurringActivity, data: dict, original: datetime.date,
+                  allow_start_change: bool = False) -> None:
     if "title" in data:
         act.title = data["title"].strip()
     for field in ("notes", "location", "kind", "chime"):
@@ -457,6 +463,11 @@ def _apply_series(db: Session, act: RecurringActivity, data: dict, original: dat
         act.weekdays = ",".join(str(d) for d in sorted(set(rep["weekdays"])))
         act.interval_weeks = rep.get("interval_weeks", 1)
         act.valid_until = parse_date(rep.get("valid_until"))
+        # Moving the first week only makes sense for the whole series.
+        if allow_start_change and rep.get("valid_from"):
+            act.valid_from = act.anchor_date = parse_date(rep["valid_from"])
+        if act.valid_until and act.valid_until < act.valid_from:
+            bad("The 'until' date can't be before it starts.")
 
 
 @router.patch("/recurring/{rid}")
@@ -492,7 +503,7 @@ def update_recurring(rid: int, body: ItemBody, db: Session = Depends(get_db)):
         db.commit()
         return {"ok": True, "recurring_id": target.id}
 
-    _apply_series(db, act, data, original or act.valid_from)
+    _apply_series(db, act, data, original or act.valid_from, allow_start_change=True)
     if "date" in data and original:
         # Moving the whole series by dragging one occurrence: drop that
         # occurrence's own move/skip so it follows the series.
@@ -530,6 +541,18 @@ def delete_recurring(rid: int, scope: Literal["this", "future", "all"] = "all", 
             act.valid_until = original - datetime.timedelta(days=1)
     db.commit()
     return {"ok": True}
+
+
+@router.get("/recurring/{rid}")
+def get_recurring(rid: int, db: Session = Depends(get_db)):
+    """One routine shaped like a calendar item, for editing the whole series (Settings → Routines)."""
+    act = db.get(RecurringActivity, rid) or bad("That routine no longer exists.", 404)
+    today = now_local().date()
+    first = max(today, act.valid_from)
+    nxt = next(iter(occurrence_dates(act, first, first + datetime.timedelta(days=7 * act.interval_weeks + 7))), act.valid_from)
+    item = recurring_item(act, nxt, None, now_local())
+    item["active"] = act.active
+    return item
 
 
 @router.get("/recurring")

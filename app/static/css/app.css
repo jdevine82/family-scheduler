@@ -511,3 +511,4 @@ button.lh-name:hover { background: var(--hover); }
 .st-later, .st-moved { opacity: .6; }
 .rrow.st-notdone { background: color-mix(in srgb, var(--danger) 7%, transparent); }
 .wall .report .rrow { font-size: 16px; padding: 8px 6px; }
+.field > .seg { align-self: flex-start; }

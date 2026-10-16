@@ -1,6 +1,6 @@
 // Sheets for creating/editing calendar items and tasks, plus the
 // "this one / future / all" question for routines.
-import { esc, openSheet, choose, toast, fmtDate, toMin, fromMin, weekdayIdx, DAY_SHORT } from "./util.js";
+import { esc, openSheet, choose, toast, fmtDate, toMin, fromMin, weekdayIdx, addDays, DAY_SHORT } from "./util.js";
 import { post, patch, del } from "./api.js";
 
 const REMIND = [[0, "No reminder"], [5, "5 min before"], [10, "10 min before"], [15, "15 min before"], [30, "30 min before"], [60, "1 hour before"]];
@@ -46,7 +46,9 @@ export function scopeQuestion(item, { allowThis = true, verb = "Change" } = {}) 
 
 // ---------------------------------------------------------------- item editor
 
-export function openEditor({ item = null, defaults = {}, members, onSaved }) {
+// seriesOnly: editing a routine as a whole (Settings → Routines). No "this day" field and
+// no "this one / future / all" question; changes always apply to every week.
+export function openEditor({ item = null, defaults = {}, members, onSaved, seriesOnly = false }) {
   const it = item || {
     title: "", notes: "", location: "", date: defaults.date, end_date: null, start: defaults.start ?? "09:00",
     end: defaults.end ?? (defaults.start ? fromMin(Math.min(toMin(defaults.start) + 60, 23 * 60 + 59)) : "10:00"),
@@ -55,6 +57,7 @@ export function openEditor({ item = null, defaults = {}, members, onSaved }) {
   };
   const isRec = it.source === "recurring";
   const rep = it.repeat || { weekdays: [weekdayIdx(it.date)], interval_weeks: 1, valid_until: null };
+  const startRepeating = !item && defaults.repeat;
   const s = openSheet(`<h2>${item ? "Edit" : "New"} ${isRec ? "routine" : "item"}</h2>
     <form class="stack" novalidate>
       <label class="field">What<input type="text" name="title" value="${esc(it.title)}" maxlength="200" required ${item ? "" : "autofocus"} placeholder="e.g. Swimming, Dentist, Clean gutters"></label>
@@ -62,8 +65,8 @@ export function openEditor({ item = null, defaults = {}, members, onSaved }) {
       <div class="field"><b style="font-size:14px">Type</b>
         <div class="seg" data-kind><button type="button" data-k="fixed" aria-pressed="${it.kind === "fixed"}">Fixed event</button><button type="button" data-k="flexible" aria-pressed="${it.kind === "flexible"}">Flexible job</button></div>
         <small class="muted" data-kind-help></small></div>
-      <div class="row">
-        <label class="field">${isRec ? "Day" : "Date"}<input type="date" name="date" value="${it.date}" required></label>
+      <div class="row"${seriesOnly ? ' style="display:none"' : ""}>
+        <label class="field"><span data-datelabel>${isRec ? "This day" : "Date"}</span><input type="date" name="date" value="${it.date}" required></label>
         <label class="check" style="flex:0 0 auto"><input type="checkbox" name="all_day" ${it.all_day ? "checked" : ""}> All day</label>
       </div>
       <div class="row" data-times>
@@ -71,13 +74,15 @@ export function openEditor({ item = null, defaults = {}, members, onSaved }) {
         <label class="field">Ends<input type="time" name="end" value="${it.end || "10:00"}" step="300"></label>
       </div>
       <div class="row" data-lastday ${isRec ? "hidden" : ""}><label class="field">Last day (for trips, camps…)<input type="date" name="end_date" value="${it.end_date || ""}"></label></div>
-      <label class="check"><input type="checkbox" name="repeats" ${isRec ? "checked disabled" : ""} ${it.task_id ? "disabled" : ""}> Repeats every week</label>
+      <label class="check"${seriesOnly ? ' style="display:none"' : ""}><input type="checkbox" name="repeats" ${isRec || startRepeating ? "checked" : ""} ${isRec ? "disabled" : ""} ${it.task_id ? "disabled" : ""}> Repeats every week</label>
       <div class="stack" data-repeat hidden>
+        ${isRec ? `<label class="field">Starting from<input type="date" name="from" value="${rep.valid_from}"></label>` : ""}
         <div class="daypick">${DAY_SHORT.map((d, i) => `<button type="button" data-wd="${i}" aria-pressed="${rep.weekdays.includes(i)}">${d}</button>`).join("")}</div>
         <div class="row">
           <label class="field">How often<select name="interval">${[1, 2, 3, 4].map((n) => `<option value="${n}" ${rep.interval_weeks === n ? "selected" : ""}>${n === 1 ? "Every week" : n === 2 ? "Every second week" : `Every ${n} weeks`}</option>`).join("")}</select></label>
           <label class="field">Until (optional)<input type="date" name="until" value="${rep.valid_until || ""}"></label>
         </div>
+        <small class="muted" data-firsthint></small>
       </div>
       <details class="more-opts" ${it.location || it.notes || it.remind_minutes || it.chime_setting !== "default" ? "open" : ""}><summary>Location, notes and chime</summary>
         <div class="stack" style="margin-top:10px">
@@ -108,7 +113,19 @@ export function openEditor({ item = null, defaults = {}, members, onSaved }) {
     kindHelp();
   });
   kindHelp();
+  // "First one: Sat 31 Oct" — the first chosen weekday on or after the start date.
+  const firstHint = () => {
+    const el = s.body.querySelector("[data-firsthint]");
+    const start = (isRec ? f.from.value : f.date.value) || f.date.value;
+    const wds = [...s.body.querySelectorAll('[data-wd][aria-pressed="true"]')].map((b) => +b.dataset.wd);
+    if (!start || !wds.length) { el.textContent = ""; return; }
+    let d = start;
+    for (let i = 0; i < 7 && !wds.includes(weekdayIdx(d)); i++) d = addDays(d, 1);
+    el.textContent = `First one: ${fmtDate(d, { long: true })}`;
+  };
   const sync = () => {
+    if (!isRec) s.body.querySelector("[data-datelabel]").textContent = f.repeats.checked ? "Starting from" : "Date";
+    firstHint();
     s.body.querySelector("[data-times]").hidden = f.all_day.checked;
     s.body.querySelector("[data-repeat]").hidden = !f.repeats.checked;
     s.body.querySelector("[data-lastday]").hidden = isRec || f.repeats.checked || !f.all_day.checked;
@@ -119,8 +136,22 @@ export function openEditor({ item = null, defaults = {}, members, onSaved }) {
   s.body.querySelector(".daypick").addEventListener("click", (e) => {
     const b = e.target.closest("[data-wd]");
     if (b) b.setAttribute("aria-pressed", b.getAttribute("aria-pressed") !== "true");
+    firstHint();
   });
+  f.date.addEventListener("change", sync);
+  f.from?.addEventListener("change", firstHint);
+  if (seriesOnly) {
+    const allDay = s.body.querySelector("input[name=all_day]").closest("label");
+    s.body.querySelector("[data-times]").before(allDay);
+  }
   s.body.querySelector("[data-delete]")?.addEventListener("click", async () => {
+    if (seriesOnly) {
+      const ok = await choose(`Delete “${item.title}”?`, [{ label: "Delete every week", value: true, danger: true }, { label: "Keep it", value: false }]);
+      if (!ok) return;
+      try { await del(`/api/recurring/${item.recurring_id}?scope=all`); toast("Deleted"); s.close(); onSaved && onSaved(); }
+      catch (err) { toast(err.message, true); }
+      return;
+    }
     if (await deleteItem(item)) { s.close(); onSaved && onSaved(); }
   });
 
@@ -141,6 +172,7 @@ export function openEditor({ item = null, defaults = {}, members, onSaved }) {
       const wds = [...s.body.querySelectorAll('[data-wd][aria-pressed="true"]')].map((b) => +b.dataset.wd);
       if (!wds.length) { toast("Pick at least one day of the week.", true); return; }
       body.repeat = { weekdays: wds, interval_weeks: +f.interval.value, valid_until: f.until.value || null };
+      if (isRec && f.from.value) body.repeat.valid_from = f.from.value;
     }
     try {
       if (!item) {
@@ -151,10 +183,12 @@ export function openEditor({ item = null, defaults = {}, members, onSaved }) {
         toast("Saved");
       } else {
         const r = item.repeat;
-        const repeatChanged = !sameIds(body.repeat.weekdays, r.weekdays) || body.repeat.interval_weeks !== r.interval_weeks || (body.repeat.valid_until || null) !== r.valid_until;
+        const startChanged = body.repeat.valid_from && body.repeat.valid_from !== r.valid_from;
+        const repeatChanged = startChanged || !sameIds(body.repeat.weekdays, r.weekdays) || body.repeat.interval_weeks !== r.interval_weeks || (body.repeat.valid_until || null) !== r.valid_until;
         const big = repeatChanged || body.everyone !== item.everyone || !sameIds(body.member_ids, item.member_ids) || body.kind !== item.kind
           || body.all_day !== item.all_day || body.location !== (item.location || "") || body.chime !== item.chime_setting || (body.remind_minutes || null) !== (item.remind_minutes || null);
-        const scope = await scopeQuestion(item, { allowThis: !big, verb: "Save" });
+        // A new start date applies to the whole routine, so don't ask.
+        const scope = startChanged || seriesOnly ? "all" : await scopeQuestion(item, { allowThis: !big, verb: "Save" });
         if (!scope) return;
         if (scope === "this") {
           const small = { scope, original_date: item.original_date, title: body.title, notes: body.notes, date: body.date };
@@ -162,7 +196,7 @@ export function openEditor({ item = null, defaults = {}, members, onSaved }) {
           await patch(`/api/recurring/${item.recurring_id}`, small);
         } else {
           if (!repeatChanged) delete body.repeat;
-          if (body.date === item.date) delete body.date;
+          if (body.date === item.date || seriesOnly) delete body.date;
           await patch(`/api/recurring/${item.recurring_id}`, { ...body, scope, original_date: item.original_date });
         }
         toast("Saved");

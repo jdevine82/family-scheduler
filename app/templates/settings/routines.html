@@ -1,8 +1,8 @@
 {% extends "settings/_layout.html" %}
 {% block content %}
 <section class="panel">
-  <h2>Routines</h2>
-  <p>Everything that repeats each week. Add routines from the calendar (tick “Repeats every week”). To change one, tap it on the calendar.</p>
+  <div class="btnrow" style="justify-content:space-between"><h2>Routines</h2><button class="btn pri small" data-add-routine>＋ Add routine</button></div>
+  <p>Everything that repeats each week. Changes here apply to every week. To change just one week, tap it on the calendar.</p>
   <div class="list">
   {% for a in acts %}
     <div class="item{% if not a.active or (a.valid_until and a.valid_until < today) %} inactive{% endif %}">
@@ -12,10 +12,12 @@
           {% for d in a.weekday_list %}{{ weekday_names[d] }}{% if not loop.last %}, {% endif %}{% endfor %}{% if a.interval_weeks > 1 %} · every {{ a.interval_weeks }} weeks{% endif %}
           · {% if a.all_day %}all day{% else %}{{ a.start_time.strftime('%-I:%M %p').lower() }}–{{ a.end_time.strftime('%-I:%M %p').lower() }}{% endif %}
           · {% if a.is_everyone %}Everyone{% else %}{% for m in a.members %}{{ m.name }}{% if not loop.last %} & {% endif %}{% endfor %}{% endif %}
+          {% if a.valid_from > today %}· <b>starts {{ a.valid_from.strftime('%a %-d %b') }}</b>{% endif %}
           {% if a.valid_until %}· until {{ a.valid_until.strftime('%-d %b %Y') }}{% endif %}
           {% if a.remind_minutes %}· 🔔 {{ a.remind_minutes }} min reminder{% endif %}
         </div>
       </div>
+      <button class="btn small pri" data-edit-routine="{{ a.id }}">Edit</button>
       <form method="post" action="/settings/routines/{{ a.id }}/active" class="inline-form"><input type="hidden" name="active" value="{{ '0' if a.active else '1' }}"><button class="btn small">{{ 'Pause' if a.active else 'Resume' }}</button></form>
       <form method="post" action="/settings/routines/{{ a.id }}/delete" class="inline-form" data-confirm="Delete “{{ a.title }}” and all its weeks?"><button class="btn small danger">Delete</button></form>
     </div>
@@ -25,4 +27,24 @@
   </div>
 </section>
 {% endblock %}
-{% block scripts %}<script src="/static/js/confirm.js?v={{ v }}"></script>{% endblock %}
+{% block scripts %}
+<script src="/static/js/confirm.js?v={{ v }}"></script>
+<script type="module">
+  import { get } from "/static/js/api.js?v={{ v }}";
+  import { toast } from "/static/js/util.js?v={{ v }}";
+  import { openEditor } from "/static/js/editor.js?v={{ v }}";
+  const today = "{{ today.isoformat() }}";
+  const members = async () => (await get(`/api/calendar?start=${today}&end=${today}`)).members;
+  document.addEventListener("click", async (e) => {
+    const edit = e.target.closest("[data-edit-routine]");
+    const add = e.target.closest("[data-add-routine]");
+    if (!edit && !add) return;
+    try {
+      const ms = await members();
+      if (add) return openEditor({ defaults: { date: today, start: "09:00", repeat: true }, members: ms, onSaved: () => location.reload() });
+      const item = await get(`/api/recurring/${edit.dataset.editRoutine}`);
+      openEditor({ item, members: ms, seriesOnly: true, onSaved: () => location.reload() });
+    } catch (err) { toast(err.message, true); }
+  });
+</script>
+{% endblock %}

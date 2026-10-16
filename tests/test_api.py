@@ -188,3 +188,29 @@ def test_settings_need_parent_pin(client, db, family):
     # Never redirect off-site
     r = client.post("/settings/unlock", data={"pin": "4821", "next": "https://evil.example"}, follow_redirects=False)
     assert r.headers["location"] == "/settings/members"
+
+
+def test_routine_start_date_can_be_set_and_moved(admin, family):
+    # Created with a later start date (the "Meeting" case): nothing before it.
+    rid = admin.post("/api/events", json={"title": "Meeting", "date": "2026-10-31", "start": "13:30", "end": "15:45",
+                                          "everyone": True, "repeat": {"weekdays": [5]}}).json()["recurring_id"]
+    dates = lambda: [i["date"] for i in admin.get("/api/calendar?start=2026-10-12&end=2026-11-08").json()["items"]]
+    assert dates() == ["2026-10-31", "2026-11-07"]
+    # Moving "Starting from" earlier brings the earlier weeks back.
+    r = admin.patch(f"/api/recurring/{rid}", json={"scope": "all", "original_date": "2026-10-31",
+                                                   "repeat": {"weekdays": [5], "valid_from": "2026-10-16"}})
+    assert r.status_code == 200, r.text
+    assert dates() == ["2026-10-17", "2026-10-24", "2026-10-31", "2026-11-07"]
+    # An explicit start on create wins over the date field; until before start is refused.
+    r = admin.post("/api/events", json={"title": "X", "date": "2026-10-16", "all_day": True, "everyone": True,
+                                        "repeat": {"weekdays": [0], "valid_from": "2026-11-01", "valid_until": "2026-10-20"}})
+    assert r.status_code == 400 and "until" in r.json()["detail"]
+
+
+def test_get_routine_for_series_editing(admin, family, monkeypatch):
+    fixed_now(monkeypatch, datetime.datetime(2026, 10, 16, 9))
+    rid = admin.post("/api/events", json={"title": "Meeting", "date": "2026-10-31", "start": "13:30", "end": "15:45",
+                                          "everyone": True, "repeat": {"weekdays": [5]}}).json()["recurring_id"]
+    it = admin.get(f"/api/recurring/{rid}").json()
+    assert (it["title"], it["original_date"], it["repeat"]["valid_from"], it["active"]) == ("Meeting", "2026-10-31", "2026-10-31", True)
+    assert admin.get("/api/recurring/999").status_code == 404

@@ -16,6 +16,7 @@ from app.models import CalendarFeed, Member, RecurringActivity
 from app.services import ServiceError
 from app.settings_store import all_settings, set_setting
 from app.templating import templates
+from app.timeutil import today_local
 
 logger = logging.getLogger(__name__)
 
@@ -216,7 +217,7 @@ def feeds_refresh(_: None = Depends(require_parent_page), db: Session = Depends(
 @router.get("/routines")
 def routines_page(request: Request, _: None = Depends(require_parent_page), db: Session = Depends(get_db)):
     acts = db.query(RecurringActivity).order_by(RecurringActivity.active.desc(), RecurringActivity.title).all()
-    today = datetime.date.today()
+    today = today_local()
     return templates.TemplateResponse(request, "settings/routines.html", _ctx(request, db, "routines", acts=acts, weekday_names=WEEKDAY_NAMES, today=today))
 
 
